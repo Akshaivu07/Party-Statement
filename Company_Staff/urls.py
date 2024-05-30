@@ -1070,6 +1070,7 @@ urlpatterns = [
     path('party_statement',views.party_statement,name='party_statement'),
     path('party_statementcustomized',views.party_statementcustomized,name='party_statementcustomized'),
     path('party_statement_email',views.party_statement_email,name='party_statement_email'),
+    path('party_statement_customize_email',views.party_statement_customize_email,name='party_statement_customize_email'),
     
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]

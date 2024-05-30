@@ -50791,16 +50791,27 @@ def party_statement(request):
         purchase_order = PurchaseOrder.objects.filter(company=cmp)
         allmodules = ZohoModules.objects.get(company=cmp)
 
+        # Get unique customers associated with the SaleOrders
+        customer_ids = order.values_list('customer_id', flat=True).distinct()
+        customers = Customer.objects.filter(id__in=customer_ids)
+
+        # Get unique vendors associated with the PurchaseOrders
+        vendor_ids = purchase_order.values_list('vendor_id', flat=True).distinct()
+        vendors = Vendor.objects.filter(id__in=vendor_ids)
+
         context = {
             'allmodules': allmodules,
             'details': dash_details,
             'log_details': log_details,
             'cmp': cmp,
             'order': order,
-            'purchase_order': purchase_order
+            'purchase_order': purchase_order,
+            'customers': customers,  # Pass customers to the context
+            'vendors': vendors  # Pass vendors to the context
         }
 
     return render(request, 'zohomodules/party_reports/partystatement.html', context)
+
 
 def party_statementcustomized(request):
     if 'login_id' in request.session:
@@ -50813,10 +50824,12 @@ def party_statementcustomized(request):
             comp_details = StaffDetails.objects.get(login_details=log_details).company
 
         allmodules = ZohoModules.objects.get(company=comp_details, status='New')
-        data = Customer.objects.filter(company=comp_details)
-
+        
         if request.method == 'GET':
             trans = request.GET.get('transactions', None)
+            first_name = request.GET.get('first_name', None)
+            customer_name = request.GET.get('customer_name', None)  # Get selected customer name
+            vendor_name = request.GET.get('vendor_name', None)  # Get selected vendor name
             startDate = request.GET.get('from_date', None)
             endDate = request.GET.get('to_date', None)
             
@@ -50831,18 +50844,38 @@ def party_statementcustomized(request):
                 order = order.filter(sales_order_date__range=[startDate, endDate])
                 purchase_order = purchase_order.filter(purchase_order_date__range=[startDate, endDate])
 
-            # Filter based on the transaction type
-            if trans == 'sent':
-                order = order.filter(status='Saved')
-                purchase_order = purchase_order.filter(status='Saved')
-            elif trans == 'draft':
-                order = order.filter(status='Draft')
-                purchase_order = purchase_order.filter(status='Draft')
-            elif trans == 'all':
-                pass  # Do not filter, get all orders and purchase orders
-            elif trans:  # If trans is an invalid value
-                order = SaleOrder.objects.none()  # Empty queryset
-                purchase_order = PurchaseOrder.objects.none()  # Empty queryset
+            # Get unique customers associated with the SaleOrders
+            customer_ids = order.values_list('customer_id', flat=True).distinct()
+            customers = Customer.objects.filter(id__in=customer_ids)
+
+            # Get unique vendors associated with the PurchaseOrders
+            vendor_ids = purchase_order.values_list('vendor_id', flat=True).distinct()
+            vendors = Vendor.objects.filter(id__in=vendor_ids)
+
+            # Filter by transaction ID if provided
+            if trans:
+                if trans in customer_ids:
+                    order = order.filter(customer_id=trans)
+                elif trans in vendor_ids:
+                    purchase_order = purchase_order.filter(vendor_id=trans)
+
+            # Filter by first_name if provided
+            if first_name:
+                matching_customers = Customer.objects.filter(first_name=first_name).values_list('id', flat=True)
+                matching_vendors = Vendor.objects.filter(first_name=first_name).values_list('id', flat=True)
+                
+                order = order.filter(customer_id__in=matching_customers)
+                purchase_order = purchase_order.filter(vendor_id__in=matching_vendors)
+
+            # Filter by customer_name if provided
+            if customer_name:
+                matching_customers = Customer.objects.filter(name=customer_name).values_list('id', flat=True)
+                order = order.filter(customer_id__in=matching_customers)
+
+            # Filter by vendor_name if provided
+            if vendor_name:
+                matching_vendors = Vendor.objects.filter(name=vendor_name).values_list('id', flat=True)
+                purchase_order = purchase_order.filter(vendor_id__in=matching_vendors)
 
             totalCustomer = order.values('customer').distinct().count()
 
@@ -50856,12 +50889,16 @@ def party_statementcustomized(request):
                 'transaction': trans,
                 'totalCustomer': totalCustomer,
                 'companyName': comp_details.company_name,
+                'customers': customers,  # Pass customers to the context
+                'vendors': vendors  # Pass vendors to the context
             }
             return render(request, 'zohomodules/party_reports/partystatementcustomized.html', context)
         else:
             return redirect('/')
     else:
         return redirect('/')
+
+
 
 def party_statement_email(request):
     if 'login_id' in request.session:
@@ -50879,6 +50916,7 @@ def party_statement_email(request):
                 emails_string = request.POST['email_ids']
                 emails_list = [email.strip() for email in emails_string.split(',')]
                 email_message = request.POST['email_message']
+                
                 startDate = request.POST['start']
                 endDate = request.POST['end']
                 if startDate == "":
@@ -50890,6 +50928,7 @@ def party_statement_email(request):
                 purchase_order = PurchaseOrder.objects.filter(company=cmp)
                 allmodules = ZohoModules.objects.get(company=cmp)
 
+
                 context = {
                     'allmodules': allmodules,
                     'details': dash_details,
@@ -50899,6 +50938,87 @@ def party_statement_email(request):
                     'purchase_order': purchase_order
                 }
                 template_path = 'zohomodules/party_reports/partystatement_email.html'
+                template = get_template(template_path)
+
+                html = template.render(context)
+                result = BytesIO()
+                pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+                pdf = result.getvalue()
+                filename = 'Party Statement'
+                subject = 'Party Statement'
+                
+                email = EmailMsg(
+                    subject,
+                    f"Hi,\nPlease find the attached Party Statement report. \n{email_message}\n\n--\nRegards,\n{cmp.company_name}\n{cmp.address}\n{cmp.state} - {cmp.country}\n{cmp.contact}",
+                    from_email=settings.EMAIL_HOST_USER,
+                    to=emails_list
+                )
+                email.attach(filename, pdf, "application/pdf")
+                email.send(fail_silently=False)
+                
+
+                messages.success(request, 'Party Statement report details have been shared via email successfully!')
+                return redirect(party_statement)
+        except Exception as e:
+            print(e)
+            messages.error(request, f'{e}')
+            return redirect(party_statement)
+        
+def party_statement_customize_email(request):
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details = LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            cmp = CompanyDetails.objects.get(login_details=log_details)
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        else:
+            cmp = StaffDetails.objects.get(login_details=log_details).company
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+
+        try:
+            if request.method == 'POST':
+                emails_string = request.POST['email_ids']
+                emails_list = [email.strip() for email in emails_string.split(',')]
+                email_message = request.POST['email_message']
+                trans = request.GET.get('transactions', None)
+                startDate = request.POST['start']
+                endDate = request.POST['end']
+                if startDate == "":
+                    startDate = None
+                if endDate == "":
+                    endDate = None
+
+                order = SaleOrder.objects.filter(company=cmp)
+                purchase_order = PurchaseOrder.objects.filter(company=cmp)
+
+                if startDate and endDate:
+                    order = order.filter(sales_order_date__range=[startDate, endDate])
+                    purchase_order = purchase_order.filter(purchase_order_date__range=[startDate, endDate])
+
+                # Filter based on the transaction type
+                if trans == 'sent':
+                    order = order.filter(status='Saved')
+                    purchase_order = purchase_order.filter(status='Saved')
+                elif trans == 'draft':
+                    order = order.filter(status='Draft')
+                    purchase_order = purchase_order.filter(status='Draft')
+                elif trans == 'all':
+                    pass  # Do not filter, get all orders and purchase orders
+                elif trans:  # If trans is an invalid value
+                    order = SaleOrder.objects.none()  # Empty queryset
+                    purchase_order = PurchaseOrder.objects.none()  # Empty queryset
+
+                totalCustomer = order.values('customer').distinct().count()
+
+                context = {
+                    
+                    'details': dash_details,
+                    'log_details': log_details,
+                    'cmp': cmp,
+                    'order': order,
+                    'purchase_order': purchase_order
+                }
+                template_path = 'zohomodules/party_reports/partystatement_customized_email.html'
                 template = get_template(template_path)
 
                 html = template.render(context)

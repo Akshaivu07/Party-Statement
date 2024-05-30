@@ -222,13 +222,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                             <input name="to_date" type="date" class="inputdate form-control text-light" id="endDate" value="{{endDate}}">
                                         </div>
                                         <div class="px-2">
-                                            <label style="text-align:left;color: white;">Status</label><br>
+                                            <label style="text-align:left;color: white;">Party</label><br>
                                             <select name="transactions" id="salesTransactions" class="form-control text-light" style="background-color: #000;">
-                                                <option value="all">All</option>
-                                                <option value="save">Save</option>
-                                                <option value="draft">Draft</option>
+                                                {% for customer in customers %}
+                                                    <option value="{{ customer.id }}">{{ customer.first_name }}</option>
+                                                {% endfor %}
+                                                {% for vendor in vendors %}
+                                                    <option value="{{ vendor.id }}">{{ vendor.first_name }}</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
+                                        
                                         <div class="d-flex px-2 mt-3 mb-4">
                                             <button type="submit" class="btn btn-outline-light w-50">Run Report</button>
                                             <button type="reset" onclick="toggleContent()" class="btn btn-outline-light ml-1 w-50">Cancel</button>
@@ -317,7 +321,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                                         <td class="text-center">{{ item_name }}</td>
                                                                         <td class="text-center">{{ o.sales_order_number }}</td>
                                                                         <td class="text-center">{{ o.payment_method }}</td>
-                                                                        <td class="text-center">{{ o.grand_total }}</td>
+                                                                        <td class="text-center">{{ o.sub_total }}</td>
                                                                         <td class="text-center">{{ o.balance }}</td>
                                                                     </tr>
                                                                     {% endfor %}
@@ -327,12 +331,34 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                                         <td class="text-center">Purchase</td>
                                                                         <td class="text-center">{{ po.sales_order_number }}</td>
                                                                         <td class="text-center">{{ po.payment_method }}</td>
-                                                                        <td class="text-center">{{ po.grand_total }}</td>
+                                                                        <td class="text-center">{{ po.sub_total }}</td>
                                                                         <td class="text-center">{{ po.balance }}</td>
                                                                     </tr>
                                                                     {% endfor %}
                                                                 </tbody>
                                                             </table>
+                                                        </section>
+                                                        <section class="balance-info text-dark">
+                                                            <div class="row p-4">
+                                                                <div class="col-10">
+                                                                    
+                                                                    <div class="row mb-2">
+                                                                        <div class="col-4 ">Total Sale: <p id="sales" style="font-size: 19px;">₹<span id="totalsale"></span></p></div>
+                                                                        <div class="col-4">Total Purchase: <p id="purchase" style="font-size: 19px;">₹<span id="totalpurchase"></span></p></div>
+                                                                        <div class="col-4">Total Expence: <p id="expense" style="font-size: 19px;">₹<span id="totalexpence"></span></p></div>
+                                                                    </div>
+                                                                    <div class="row mb-2">
+                                                                        <div class="col-4 ">Total Money in: <p id="sales" style="font-size: 19px;">₹<span id="totalmoneyin"></span></p></div>
+                                                                        <div class="col-4">Total Money out :<p id="expense" style="font-size: 19px;">₹<span id="totalmoneyout"></span></p></div>
+                                                                        
+                                                                    </div>
+                                                
+                                                                </div>
+                                                                <div class="col-2 text-center">
+                                                                    <h5 style=" color: #000; font-weight: bold;">Total Receivables</h5>
+                                                                    <h4 class="text-dark" style="font-weight: 600;" id="totvalue">₹<span id="Totalreceivables"></span></h4>
+                                                                </div>
+                                                            </div>
                                                         </section>
                                                         <br>
                                                         
@@ -425,6 +451,39 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     
             $('#shareToEmail').modal('toggle');
         });
+
+        function calculateTotals() {
+        var runningBalanceTotal = 0;
+        var totalSale = 0;
+        var totalMoneyIn = 0;
+
+        // Calculate totals for each row in the table
+        $('#reportTable tbody tr').each(function() {
+            var runningBalance = parseFloat($(this).find('td:nth-child(6)').text());
+            var total = parseFloat($(this).find('td:nth-child(5)').text());
+
+            // Accumulate running balance
+            runningBalanceTotal += runningBalance;
+
+            // Accumulate total sale
+            totalSale += total;
+
+            // If running balance is positive, add to total money in
+            if (runningBalance > 0) {
+                totalMoneyIn += runningBalance;
+            }
+        });
+
+        // Update UI with calculated totals
+        $('#Totalreceivables').text(runningBalanceTotal.toFixed(2)); // Display running balance total as Total Receivables
+        $('#totalsale').text(totalSale.toFixed(2)); // Display total sale
+        $('#totalmoneyin').text(totalMoneyIn.toFixed(2)); // Display total money in
+    }
+
+    // Call the calculateTotals function when the DOM is loaded
+    $(document).ready(function() {
+        calculateTotals();
+    });
         
     
         $(document).ready(function(){

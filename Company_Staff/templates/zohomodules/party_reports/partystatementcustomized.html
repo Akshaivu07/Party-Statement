@@ -222,11 +222,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                             <input name="to_date" type="date" class="inputdate form-control text-light" id="endDate" value="{{endDate}}">
                                         </div>
                                         <div class="px-2">
-                                            <label style="text-align:left;color: white;">Status</label><br>
+                                            <label style="text-align:left;color: white;">Party</label><br>
                                             <select name="transactions" id="salesTransactions" class="form-control text-light" style="background-color: #000;">
-                                                <option value="all">All</option>
-                                                <option value="save">Save</option>
-                                                <option value="draft">Draft</option>
+                                                {% for customer in customers %}
+                                                    <option value="{{ customer.id }}">{{ customer.first_name }}</option>
+                                                {% endfor %}
+                                                {% for vendor in vendors %}
+                                                    <option value="{{ vendor.id }}">{{ vendor.first_name }}</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
                                         <div class="d-flex px-2 mt-3 mb-4">
@@ -317,7 +320,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                                         <td class="text-center">{{ item_name }}</td>
                                                                         <td class="text-center">{{ o.sales_order_number }}</td>
                                                                         <td class="text-center">{{ o.payment_method }}</td>
-                                                                        <td class="text-center">{{ o.grand_total }}</td>
+                                                                        <td class="text-center">{{ o.sub_total }}</td>
                                                                         <td class="text-center">{{ o.balance }}</td>
                                                                     </tr>
                                                                     {% endfor %}
@@ -327,7 +330,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                                         <td class="text-center">Purchase</td>
                                                                         <td class="text-center">{{ po.sales_order_number }}</td>
                                                                         <td class="text-center">{{ po.payment_method }}</td>
-                                                                        <td class="text-center">{{ po.grand_total }}</td>
+                                                                        <td class="text-center">{{ po.sub_total }}</td>
                                                                         <td class="text-center">{{ po.balance }}</td>
                                                                     </tr>
                                                                     {% endfor %}
@@ -358,7 +361,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
               </button>
             </div>
             <div class="modal-body mx-3" style="background-color: #000;">
-              <form action="" method="post" id="share_to_email_form" class="needs-validation" novalidate enctype="multipart/form-data">
+              <form action="{% url 'party_statement_customize_email' %}" method="post" id="share_to_email_form" class="needs-validation" novalidate enctype="multipart/form-data">
                 {%csrf_token%}
                 <div class="form-group">
                     <label for="emailIds">Email IDs</label>
