@@ -221,7 +221,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                         </div>
                                         <div class="px-2">
                                             <label style="text-align:left;color: white;">Party</label><br>
-                                            <select name="transactions" id="salesTransactions" class="form-control text-light" style="background-color: #000;" onchange="updateCustomerName()">
+                                            <select name="transactions" id="salesTransactions" class="form-control text-light" style="background-color: #000;" onchange="updateVendorStatus()">
                                                 <option value="all" {% if not transaction or transaction == 'all' %}selected{% endif %}>all</option>
                                                 {% for customer in customers %}
                                                     <option value="{{ customer.id }}" {% if transaction == customer.id %}selected{% endif %}>
@@ -321,9 +321,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                             {% if startDate and endDate %}
                                                             <center class="h6 text-white">{{startDate}} TO {{endDate}}</center>
                                                             {% endif %}
-                                                            {% if startDate and endDate %}
-                                                            <center class="h6 text-white">{{startDate}} TO {{endDate}}</center>
-                                                            {% endif %}
+                                                            
                                                     </div>  
                                                     
                                                 </div>
@@ -413,6 +411,47 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                                         <td class="text-center">{{ d.balance }}</td>
                                                                     </tr>
                                                                     {% endfor %}
+                                                                    
+                                                                    {% for d in recurringinvoice %}
+                                                                    <tr>
+                                                                        <td class="text-center">{{ d.start_date }}</td>
+                                                                        <td class="text-center">Recurring Invoice</td>
+                                                                        <td class="text-center">{{ d.rec_invoice_no }}</td>
+                                                                        <td class="text-center">{{d.payment_method}}</td>
+                                                                        <td class="text-center">{{ d.subtotal }}</td>
+                                                                        <td class="text-center">{{ d.balance }}</td>
+                                                                    </tr>
+                                                                    {% endfor %}
+                                                                    {% for d in retainerinvoice %}
+                                                                    <tr>
+                                                                        <td class="text-center">{{ d.retainer_invoice_date }}</td>
+                                                                        <td class="text-center">Retainer Invoice</td>
+                                                                        <td class="text-center">{{ d.retainer_invoice_number }}</td>
+                                                                        <td class="text-center">{{d.payment_method}}</td>
+                                                                        <td class="text-center">{{ d.total_amount }}</td>
+                                                                        <td class="text-center">{{ d.balance }}</td>
+                                                                    </tr>
+                                                                    {% endfor %}
+                                                                    {% for d in bill %}
+                                                                    <tr>
+                                                                        <td class="text-center">{{ d.Bill_Date }}</td>
+                                                                        <td class="text-center">Bill</td>
+                                                                        <td class="text-center">{{ d.Bill_Number }}</td>
+                                                                        <td class="text-center">{{d.Payment_Method}}</td>
+                                                                        <td class="text-center">{{ d.Sub_Total }}</td>
+                                                                        <td class="text-center">{{ d.Balance }}</td>
+                                                                    </tr>
+                                                                    {% endfor %}
+                                                                    {% for d in recurring_bill %}
+                                                                    <tr>
+                                                                        <td class="text-center">{{ d.rec_bill_date }}</td>
+                                                                        <td class="text-center">Recurring Bill</td>
+                                                                        <td class="text-center">{{ d.recc_bill_no }}</td>
+                                                                        <td class="text-center">{{d.payment_type}}</td>
+                                                                        <td class="text-center">{{ d.sub_total }}</td>
+                                                                        <td class="text-center">{{ d.bal }}</td>
+                                                                    </tr>
+                                                                    {% endfor %}
                                                                 </tbody>
                                                             </table>
                                                         </section>
@@ -423,7 +462,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                                     <div class="row mb-2">
                                                                         <div class="col-4 ">Total Sale: <p id="sales" style="font-size: 19px;">₹<span id="totalsale"></span></p></div>
                                                                         <div class="col-4">Total Purchase: <p id="purchase" style="font-size: 19px;">₹<span id="totalpurchase"></span></p></div>
-                                                                        <div class="col-4">Total Expence: <p id="expense" style="font-size: 19px;">₹<span id="totalexpence"></span></p></div>
+                                                                        <div class="col-4">Total Expence: <p id="expense" style="font-size: 19px;">₹{{ total_expense_sum }}<span id="totalexpence"></span></p></div>
                                                                     </div>
                                                                     <div class="row mb-2">
                                                                         <div class="col-4 ">Total Money in: <p id="sales" style="font-size: 19px;">₹<span id="totalmoneyin"></span></p></div>
@@ -557,7 +596,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         const total = parseFloat($(this).find('td:nth-child(5)').text().trim().replace(/,/g, '')) || 0;
         const runningBalance = parseFloat($(this).find('td:nth-child(6)').text().trim().replace(/,/g, '')) || 0;
 
-        totalSale += total; // Sum up all values in the "Total" column
+        totalSale += total; 
 
         if (type === 'Sale Order') {
             totalMoneyIn += total;
@@ -651,7 +690,7 @@ $(document).ready(function() {
             var opt =
             {
                 margin: [0.5, 0.3, 0.3, 0.5],
-                filename: 'Sale Order Item Details',
+                filename: 'Party Statement Details',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
@@ -677,7 +716,7 @@ $(document).ready(function() {
             const ws = XLSX.utils.table_to_sheet(Table);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-            XLSX.writeFile(wb, "Sale Order Item Details.xlsx");
+            XLSX.writeFile(wb, "Party Statement Details.xlsx");
         }
     
         let sortOrder = false; // false for ascending, true for descending

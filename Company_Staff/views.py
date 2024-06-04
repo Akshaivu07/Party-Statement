@@ -36,7 +36,7 @@ from django.http import HttpResponseBadRequest, HttpResponseNotFound, JsonRespon
 from email.message import EmailMessage
 from django.core.exceptions import ObjectDoesNotExist
 import re
-from .models import payroll_employee,Attendance,Attendance_History,Holiday,Attendance_comment,Bloodgroup
+from .models import payroll_employee,Attendance,Attendance_History,Holiday,Attendance_comment,Bloodgroup,Recurring_Expense,invoice
 from calendar import monthrange
 from collections import defaultdict
 import calendar
@@ -50783,18 +50783,17 @@ def party_statement(request):
         
         if log_details.user_type == 'Company':
             cmp = CompanyDetails.objects.get(login_details=log_details)
-            dash_details = cmp  # Using the same CompanyDetails object
+            dash_details = cmp  
         else:
             staff = StaffDetails.objects.get(login_details=log_details)
             cmp = staff.company
-            dash_details = staff  # Using the same StaffDetails object
+            dash_details = staff  
         
         order = SaleOrder.objects.filter(company=cmp)
         purchase_order = PurchaseOrder.objects.filter(company=cmp)
-        # invoice_order = invoice.objects.filter(company=cmp)
         deliverychallan = Delivery_challan.objects.filter(company=cmp)
         recurringinvoice = RecurringInvoice.objects.filter(company=cmp)
-        # retainerinvoice = RetainerInvoice.objects.filter(company=cmp)
+        retainerinvoice = RetainerInvoice.objects.filter(company=cmp)
         estimate = Estimate.objects.filter(company=cmp)
         creditnote = Credit_Note.objects.filter(company=cmp)
         allmodules = ZohoModules.objects.get(company=cmp)
@@ -50808,8 +50807,8 @@ def party_statement(request):
         creditnote_ids = creditnote.values_list('customer_id', flat=True).distinct()
         cnote = Customer.objects.filter(id__in=creditnote_ids)
 
-        # retainerinvoice_ids = retainerinvoice.values_list('customer_id', flat=True).distinct()
-        # rtinvoice = Customer.objects.filter(id__in=retainerinvoice_ids)
+        retainerinvoice_ids = retainerinvoice.values_list('customer_name_id', flat=True).distinct()
+        rtinvoice = Customer.objects.filter(id__in=retainerinvoice_ids)
 
         deliverychallan_ids = deliverychallan.values_list('customer_id', flat=True).distinct()
         challan = Customer.objects.filter(id__in=deliverychallan_ids)
@@ -50817,11 +50816,12 @@ def party_statement(request):
         customer_ids = order.values_list('customer_id', flat=True).distinct()
         customers = Customer.objects.filter(id__in=customer_ids)
 
-        # invoice_ids = invoice_order.values_list('customer_id', flat=True).distinct()
-        # invoice = Customer.objects.filter(id__in=customer_ids)
-
         vendor_ids = purchase_order.values_list('vendor_id', flat=True).distinct()
         vendors = Vendor.objects.filter(id__in=vendor_ids)
+
+        total_recurring_expense = Recurring_Expense.objects.filter(company=cmp).aggregate(Sum('amount'))['amount__sum'] or 0
+        total_expense = Expense.objects.filter(company=cmp).aggregate(Sum('amount'))['amount__sum'] or 0
+        total_expense_sum = total_recurring_expense + total_expense
 
         context = {
             'allmodules': allmodules,
@@ -50830,24 +50830,23 @@ def party_statement(request):
             'cmp': cmp,
             'order': order,
             'purchase_order': purchase_order,
-            'customers': customers,  # Pass customers to the context
-            'vendors': vendors,  # Pass vendors to the context
+            'customers': customers,  
+            'vendors': vendors,  
             'deliverychallan': deliverychallan,
-            # 'invoice_order': invoice_order,
-            'challan' : challan,
-            # 'invoice' : invoice
-            'recurringinvoice':recurringinvoice,
-            'rcinvoice':rcinvoice,
-            # 'retainerinvoice':retainerinvoice,
-            # 'rtinvoice':rtinvoice,
-            'estimate':estimate,
-            'est':est,
-            'creditnote':creditnote,
-            'cnote':cnote
-
+            'challan': challan,
+            'recurringinvoice': recurringinvoice,
+            'rcinvoice': rcinvoice,
+            'retainerinvoice': retainerinvoice,
+            'rtinvoice': rtinvoice,
+            'estimate': estimate,
+            'est': est,
+            'creditnote': creditnote,
+            'cnote': cnote,
+            'total_expense_sum': total_expense_sum,
         }
 
     return render(request, 'zohomodules/party_reports/partystatement.html', context)
+
 
 
 def party_statementcustomized(request):
@@ -50861,6 +50860,9 @@ def party_statementcustomized(request):
             comp_details = StaffDetails.objects.get(login_details=log_details).company
 
         allmodules = ZohoModules.objects.get(company=comp_details, status='New')
+        total_recurring_expense = Recurring_Expense.objects.filter(company=comp_details).aggregate(Sum('amount'))['amount__sum'] or 0
+        total_expense = Expense.objects.filter(company=comp_details).aggregate(Sum('amount'))['amount__sum'] or 0
+        total_expense_sum = total_recurring_expense + total_expense
         
         if request.method == 'GET':
             trans = request.GET.get('transactions', None)
@@ -50868,7 +50870,6 @@ def party_statementcustomized(request):
             startDate = request.GET.get('from_date', None)
             endDate = request.GET.get('to_date', None)
 
-            # Fetch all orders, purchase orders, and other related data
             order = SaleOrder.objects.filter(company=comp_details)
             purchase_order = PurchaseOrder.objects.filter(company=comp_details)
             deliverychallan = Delivery_challan.objects.filter(company=comp_details)
@@ -50876,21 +50877,24 @@ def party_statementcustomized(request):
             estimate = Estimate.objects.filter(company=comp_details)
             creditnote = Credit_Note.objects.filter(company=comp_details)
 
-            # Fetch distinct customers and vendors
             recurringinvoice_ids = recurringinvoice.values_list('customer_id', flat=True).distinct()
             rcinvoice = Customer.objects.filter(id__in=recurringinvoice_ids)
+
             estimate_ids = estimate.values_list('customer_id', flat=True).distinct()
             est = Customer.objects.filter(id__in=estimate_ids)
+
             creditnote_ids = creditnote.values_list('customer_id', flat=True).distinct()
             cnote = Customer.objects.filter(id__in=creditnote_ids)
+
             customer_ids = order.values_list('customer_id', flat=True).distinct()
             customers = Customer.objects.filter(id__in=customer_ids)
+
             deliverychallan_ids = deliverychallan.values_list('customer_id', flat=True).distinct()
             challan = Customer.objects.filter(id__in=deliverychallan_ids)
+
             vendor_ids = purchase_order.values_list('vendor_id', flat=True).distinct()
             vendors = Vendor.objects.filter(id__in=vendor_ids)
 
-            # Apply date filters if provided
             if startDate and endDate:
                 order = order.filter(sales_order_date__range=[startDate, endDate])
                 purchase_order = purchase_order.filter(purchase_order_date__range=[startDate, endDate])
@@ -50899,14 +50903,12 @@ def party_statementcustomized(request):
                 estimate = estimate.filter(estimate_date__range=[startDate, endDate])
                 creditnote = creditnote.filter(credit_note_date__range=[startDate, endDate])
 
-            # Initialize selected data
             selected_order = None
             selected_purchase_order = None
             selected_deliverychallan = None
             selected_recurringinvoice = None
             selected_estimate = None
             selected_creditnote = None
-            selected_customer_name = None
 
             if trans:
                 if trans == 'all':
@@ -50919,27 +50921,20 @@ def party_statementcustomized(request):
                 else:
                     if is_vendor:
                         selected_purchase_order = purchase_order.filter(vendor_id=trans)
-                        selected_customer_name = vendors.get(id=trans).first_name
                     else:
                         selected_order = order.filter(customer_id=trans)
-                        if selected_order.exists():
-                            selected_customer_name = customers.get(id=trans).first_name
-                        else:
+                        if not selected_order.exists():
+                            selected_order = None
                             selected_deliverychallan = deliverychallan.filter(customer_id=trans)
-                            if selected_deliverychallan.exists():
-                                selected_customer_name = challan.get(id=trans).first_name
-                            else:
+                            if not selected_deliverychallan.exists():
+                                selected_deliverychallan = None
                                 selected_recurringinvoice = recurringinvoice.filter(customer_id=trans)
-                                if selected_recurringinvoice.exists():
-                                    selected_customer_name = rcinvoice.get(id=trans).first_name
-                                else:
+                                if not selected_recurringinvoice.exists():
+                                    selected_recurringinvoice = None
                                     selected_estimate = estimate.filter(customer_id=trans)
-                                    if selected_estimate.exists():
-                                        selected_customer_name = est.get(id=trans).first_name
-                                    else:
+                                    if not selected_estimate.exists():
+                                        selected_estimate = None
                                         selected_creditnote = creditnote.filter(customer_id=trans)
-                                        if selected_creditnote.exists():
-                                            selected_customer_name = cnote.get(id=trans).first_name
 
             context = {
                 'order': list(selected_order) if selected_order else [],
@@ -50960,7 +50955,7 @@ def party_statementcustomized(request):
                 'rcinvoice': rcinvoice,
                 'est': est,
                 'cnote': cnote,
-                'selected_customer_name': selected_customer_name,
+                'total_expense_sum': total_expense_sum
             }
 
             return render(request, 'zohomodules/party_reports/partystatementcustomized.html', context)
@@ -50999,10 +50994,10 @@ def party_statement_email(request):
 
                 order = SaleOrder.objects.filter(company=cmp)
                 purchase_order = PurchaseOrder.objects.filter(company=cmp)
-                # invoice_order = invoice.objects.filter(company=cmp)
+                invoice_order = invoice.objects.filter(company=cmp)
                 deliverychallan = Delivery_challan.objects.filter(company=cmp)
                 recurringinvoice = RecurringInvoice.objects.filter(company=cmp)
-                # retainerinvoice = RetainerInvoice.objects.filter(company=cmp)
+                retainerinvoice = RetainerInvoice.objects.filter(company=cmp)
                 estimate = Estimate.objects.filter(company=cmp)
                 creditnote = Credit_Note.objects.filter(company=cmp)
                 allmodules = ZohoModules.objects.get(company=cmp)
@@ -51016,8 +51011,8 @@ def party_statement_email(request):
                 creditnote_ids = creditnote.values_list('customer_id', flat=True).distinct()
                 cnote = Customer.objects.filter(id__in=creditnote_ids)
 
-                # retainerinvoice_ids = retainerinvoice.values_list('customer_id', flat=True).distinct()
-                # rtinvoice = Customer.objects.filter(id__in=retainerinvoice_ids)
+                retainerinvoice_ids = retainerinvoice.values_list('customer_id', flat=True).distinct()
+                rtinvoice = Customer.objects.filter(id__in=retainerinvoice_ids)
 
                 deliverychallan_ids = deliverychallan.values_list('customer_id', flat=True).distinct()
                 challan = Customer.objects.filter(id__in=deliverychallan_ids)
@@ -51025,8 +51020,8 @@ def party_statement_email(request):
                 customer_ids = order.values_list('customer_id', flat=True).distinct()
                 customers = Customer.objects.filter(id__in=customer_ids)
 
-                # invoice_ids = invoice_order.values_list('customer_id', flat=True).distinct()
-                # invoice = Customer.objects.filter(id__in=customer_ids)
+                invoice_ids = invoice_order.values_list('customer_id', flat=True).distinct()
+                invoice = Customer.objects.filter(id__in=customer_ids)
 
                 vendor_ids = purchase_order.values_list('vendor_id', flat=True).distinct()
                 vendors = Vendor.objects.filter(id__in=vendor_ids)
@@ -51038,16 +51033,16 @@ def party_statement_email(request):
                     'cmp': cmp,
                     'order': order,
                     'purchase_order': purchase_order,
-                    'customers': customers,  # Pass customers to the context
-                    'vendors': vendors,  # Pass vendors to the context
+                    'customers': customers,  
+                    'vendors': vendors, 
                     'deliverychallan': deliverychallan,
-                    # 'invoice_order': invoice_order,
+                    'invoice_order': invoice_order,
                     'challan' : challan,
-                    # 'invoice' : invoice
+                    'invoice' : invoice,
                     'recurringinvoice':recurringinvoice,
                     'rcinvoice':rcinvoice,
-                    # 'retainerinvoice':retainerinvoice,
-                    # 'rtinvoice':rtinvoice,
+                    'retainerinvoice':retainerinvoice,
+                    'rtinvoice':rtinvoice,
                     'estimate':estimate,
                     'est':est,
                     'creditnote':creditnote,
@@ -51081,7 +51076,7 @@ def party_statement_email(request):
             print(e)
             messages.error(request, f'{e}')
             return redirect(party_statement)
-        
+
 def party_statement_customize_email(request):
     if 'login_id' in request.session:
         log_id = request.session['login_id']
@@ -51090,8 +51085,9 @@ def party_statement_customize_email(request):
             cmp = CompanyDetails.objects.get(login_details=log_details)
             dash_details = CompanyDetails.objects.get(login_details=log_details)
         else:
-            cmp = StaffDetails.objects.get(login_details=log_details).company
-            dash_details = StaffDetails.objects.get(login_details=log_details)
+            staff = StaffDetails.objects.get(login_details=log_details)
+            cmp = staff.company
+            dash_details = staff 
 
         try:
             if request.method == 'POST':
@@ -51100,6 +51096,7 @@ def party_statement_customize_email(request):
                 email_message = request.POST['email_message']
                 trans = request.GET.get('transactions', None)
                 is_vendor = request.GET.get('is_vendor', 'false') == 'true'
+                
                 startDate = request.POST['start']
                 endDate = request.POST['end']
                 if startDate == "":
@@ -51192,10 +51189,10 @@ def party_statement_customize_email(request):
                     'rcinvoice': rcinvoice,
                     'est': est,
                     'cnote': cnote
+                    
                 }
 
-
-                template_path = 'zohomodules/party_reports/partystatement_customized_email.html'
+                template_path = 'zohomodules/party_reports/partystatement_email.html'
                 template = get_template(template_path)
 
                 html = template.render(context)
@@ -51220,9 +51217,9 @@ def party_statement_customize_email(request):
         except Exception as e:
             print(e)
             messages.error(request, f'{e}')
-            return redirect(party_statement)
+            return redirect(party_statement)        
 
-            
+     
 def purchase_by_item(request):
     if 'login_id' in request.session:
         log_id = request.session['login_id']
