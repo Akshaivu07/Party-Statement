@@ -224,33 +224,48 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                             <select name="transactions" id="salesTransactions" class="form-control text-light" style="background-color: #000;" onchange="updateVendorStatus()">
                                                 <option value="all" {% if not transaction or transaction == 'all' %}selected{% endif %}>all</option>
                                                 {% for customer in customers %}
-                                                    <option value="{{ customer.id }}" {% if transaction == customer.id %}selected{% endif %}>
+                                                    <option value="{{ customer.id }} {{ customer.first_name }} {{ customer.last_name }}" {% if transaction == customer.id %}selected{% endif %}>
                                                         {{ customer.first_name }}
                                                     </option>
                                                 {% endfor %}
                                                 {% for vendor in vendors %}
-                                                    <option value="{{ vendor.id }}" data-vendor="true" {% if transaction == vendor.id %}selected{% endif %}>
+                                                    <option value="{{ vendor.id }}"  {% if transaction == vendor.id %}selected{% endif %}>
                                                         {{ vendor.first_name }}
                                                     </option>
                                                 {% endfor %}
                                                 {% for challan in challan %}
-                                                    <option value="{{ challan.id }}" {% if transaction == challan.id %}selected{% endif %}>
+                                                    <option value="{{ challan.id }} {{ challan.first_name }} {{ challan.last_name }}" {% if transaction == challan.id %}selected{% endif %}>
                                                         {{ challan.first_name }}
                                                     </option>
                                                 {% endfor %}
                                                 {% for rcinvoice in rcinvoice %}
-                                                    <option value="{{ rcinvoice.id }}" {% if transaction == rcinvoice.id %}selected{% endif %}>
+                                                    <option value="{{ rcinvoice.id }} {{ rcinvoice.first_name }} {{ rcinvoice.last_name }}" {% if transaction == rcinvoice.id %}selected{% endif %}>
                                                         {{ rcinvoice.first_name }}
                                                     </option>
                                                 {% endfor %}
                                                 {% for est in est %}
-                                                    <option value="{{ est.id }}" {% if transaction == est.id %}selected{% endif %}>
+                                                    <option value="{{ est.id }} {{ est.first_name }} {{ est.last_name }}" {% if transaction == est.id %}selected{% endif %}>
                                                         {{ est.first_name }}
                                                     </option>
                                                 {% endfor %}
                                                 {% for cnote in cnote %}
-                                                    <option value="{{ cnote.id }}" {% if transaction == cnote.id %}selected{% endif %}>
+                                                    <option value="{{ cnote.id }} {{ cnote.first_name }} {{ cnote.last_name }}" {% if transaction == cnote.id %}selected{% endif %}>
                                                         {{ cnote.first_name }}
+                                                    </option>
+                                                {% endfor %}
+                                                {% for rcbill in rcbill %}
+                                                    <option value="{{ rcbill.id }} {{ rcbill.first_name }} {{ rcbill.last_name }}"  {% if transaction == rcbill.id %}selected{% endif %}>
+                                                        {{ rcbill.first_name }}
+                                                    </option>
+                                                {% endfor %}
+                                                {% for bills in bills %}
+                                                    <option value="{{ bills.id }} {{ bills.first_name }} {{ bills.last_name }}"  {% if transaction == bills.id %}selected{% endif %}>
+                                                        {{ bills.first_name }}
+                                                    </option>
+                                                {% endfor %}
+                                                {% for rtinvoice in rtinvoice %}
+                                                    <option value="{{ rtinvoice.id }} {{ rtinvoice.first_name }} {{ rtinvoice.last_name }}" {% if transaction == rtinvoice.id %}selected{% endif %}>
+                                                        {{ rtinvoice.first_name }}
                                                     </option>
                                                 {% endfor %}
                                             </select>
@@ -316,7 +331,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                 <div class="py-4 bg-warning" >
                                                     
                                                     <div class="col-12">
-                                                            <center class="h5 text-white"><b>{{cmp.company_name}}</b></center>
+                                                            <center class="h5 text-white"><b>{{companyName}}</b></center>
                                                             <center class="h3 text-white"><b>Party Statement</b></center>
                                                             {% if startDate and endDate %}
                                                             <center class="h6 text-white">{{startDate}} TO {{endDate}}</center>
@@ -551,6 +566,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                 // contentDiv.style.left = buttonRect.left + "px";
             }
         }
+        function updateVendorStatus() {
+        var select = document.getElementById("salesTransactions");
+        var selectedOption = select.options[select.selectedIndex];
+        var isVendor = selectedOption.getAttribute("data-vendor") === "true";
+        var isBills = selectedOption.getAttribute("data-bills") === "true";
+        var isRcBill = selectedOption.getAttribute("data-rcbill") === "true";
+        
+        if (isVendor || isBills || isRcBill) {
+            document.getElementById("isVendor").value = "true";
+        } else {
+            document.getElementById("isVendor").value = "false";
+        }
+    }
     
         $('#toggleEmailModal').on('click',function(){
             var st = $('#startDate').val();

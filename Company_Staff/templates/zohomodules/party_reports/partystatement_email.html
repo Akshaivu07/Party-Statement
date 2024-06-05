@@ -180,9 +180,50 @@
                             <td>{{ d.credit_note_date }}</td>
                             <td>Credit note</td>
                             <td>{{ d.credit_note_number }}</td>
-                            <td class="payment-method">{{ d.payment_method }}</td>
+                            <td class="payment-method">{{d.payment_method}}</td>
                             <td>{{ d.sub_total }}</td>
                             <td class="running-balance">{{ d.balance }}</td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% for d in recurringinvoice %}
+                        <tr>
+                            <td>{{ d.start_date }}</td>
+                            <td>Recurring Invoice</td>
+                            <td>{{ d.rec_invoice_no }}</td>
+                            <td class="payment-method">{{d.payment_method}}</td>
+                            <td>{{ d.subtotal }}</td>
+                            <td class="running-balance">{{ d.balance }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% for d in retainerinvoice %}
+                        <tr>
+                            <td>{{ d.retainer_invoice_date }}</td>
+                            <td>Retainer Invoice</td>
+                            <td>{{ d.retainer_invoice_number }}</td>
+                            <td class="payment-method">{{d.payment_method}}</td>
+                            <td>{{ d.total_amount }}</td>
+                            <td class="running-balance">{{ d.balance }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% for d in bill %}
+                        <tr>
+                            <td>{{ d.Bill_Date }}</td>
+                            <td>Bill</td>
+                            <td>{{ d.Bill_Number }}</td>
+                            <td class="payment-method">{{d.Payment_Method}}</td>
+                            <td>{{ d.Sub_Total }}</td>
+                            <td class="running-balance">{{ d.Balance }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% for d in recurring_bill %}
+                        <tr>
+                            <td>{{ d.rec_bill_date }}</td>
+                            <td>Recurring Bill</td>
+                            <td>{{ d.recc_bill_no }}</td>
+                            <td class="payment-method">{{d.payment_type}}</td>
+                            <td>{{ d.sub_total }}</td>
+                            <td class="running-balance">{{ d.bal }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
