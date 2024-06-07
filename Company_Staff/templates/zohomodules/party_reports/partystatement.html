@@ -225,50 +225,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                 <option value="all" {% if not transaction or transaction == 'all' %}selected{% endif %}>all</option>
                                                 {% for customer in customers %}
                                                     <option value="{{ customer.id }} {{ customer.first_name }} {{ customer.last_name }}" {% if transaction == customer.id %}selected{% endif %}>
-                                                        {{ customer.first_name }}
+                                                        {{ customer.first_name }} {{ customer.last_name }}
                                                     </option>
                                                 {% endfor %}
                                                 {% for vendor in vendors %}
-                                                    <option value="{{ vendor.id }}"  {% if transaction == vendor.id %}selected{% endif %}>
-                                                        {{ vendor.first_name }}
-                                                    </option>
-                                                {% endfor %}
-                                                {% for challan in challan %}
-                                                    <option value="{{ challan.id }} {{ challan.first_name }} {{ challan.last_name }}" {% if transaction == challan.id %}selected{% endif %}>
-                                                        {{ challan.first_name }}
-                                                    </option>
-                                                {% endfor %}
-                                                {% for rcinvoice in rcinvoice %}
-                                                    <option value="{{ rcinvoice.id }} {{ rcinvoice.first_name }} {{ rcinvoice.last_name }}" {% if transaction == rcinvoice.id %}selected{% endif %}>
-                                                        {{ rcinvoice.first_name }}
-                                                    </option>
-                                                {% endfor %}
-                                                {% for est in est %}
-                                                    <option value="{{ est.id }} {{ est.first_name }} {{ est.last_name }}" {% if transaction == est.id %}selected{% endif %}>
-                                                        {{ est.first_name }}
-                                                    </option>
-                                                {% endfor %}
-                                                {% for cnote in cnote %}
-                                                    <option value="{{ cnote.id }} {{ cnote.first_name }} {{ cnote.last_name }}" {% if transaction == cnote.id %}selected{% endif %}>
-                                                        {{ cnote.first_name }}
-                                                    </option>
-                                                {% endfor %}
-                                                {% for rcbill in rcbill %}
-                                                    <option value="{{ rcbill.id }} {{ rcbill.first_name }} {{ rcbill.last_name }}"  {% if transaction == rcbill.id %}selected{% endif %}>
-                                                        {{ rcbill.first_name }}
-                                                    </option>
-                                                {% endfor %}
-                                                {% for bills in bills %}
-                                                    <option value="{{ bills.id }} {{ bills.first_name }} {{ bills.last_name }}"  {% if transaction == bills.id %}selected{% endif %}>
-                                                        {{ bills.first_name }}
-                                                    </option>
-                                                {% endfor %}
-                                                {% for rtinvoice in rtinvoice %}
-                                                    <option value="{{ rtinvoice.id }} {{ rtinvoice.first_name }} {{ rtinvoice.last_name }}" {% if transaction == rtinvoice.id %}selected{% endif %}>
-                                                        {{ rtinvoice.first_name }}
+                                                    <option value="{{ vendor.id }} {{ vendor.first_name }} {{ vendor.last_name }}" {% if transaction == vendor.id %}selected{% endif %}>
+                                                        {{ vendor.first_name }} {{ vendor.last_name }}
                                                     </option>
                                                 {% endfor %}
                                             </select>
+                                            
+                                            
                                             
                                             <input type="hidden" name="is_vendor" id="isVendor" value="false">
                                         </div>
@@ -309,10 +276,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                 <i class="fas fa-share p-1" style="font-size: large;"></i>
                                 <span style="font-size: 2vh; margin-left: 0.5rem;" class="text-center">Share</span>
                             </a>
-                            <div class="dropdown-menu" aria-labelledby="share_btn">
-                                <li class="" style="color: #000;">{% post_to_whatsapp object_or_url "WhatsApp" %}</li>
-            
-                                <a class="dropdown-item text-black" data-toggle="modal" id="toggleEmailModal">Email</a>
+                            <ul class="dropdown-menu" aria-labelledby="share_btn">
+                                <a href="#" style="color: black; text-decoration: none;"><li style="margin-left: 1.5vw;">
+                                    {% post_to_whatsapp object_or_url "WhatsApp" %}
+                                </li></a>
+
+                                <li>
+                                  <a class="dropdown-item text-black" data-toggle="modal" id="toggleEmailModal">Email
+                                </li></a>
+                            </ul>
                             </div>
                         </div>
                     </div>
@@ -356,117 +328,151 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    {% for o in order %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ o.sales_order_date }}</td>
-                                                                        <td class="text-center">Sale Order</td>
-                                                                        <td class="text-center">{{ o.sales_order_number }}</td>
-                                                                        <td class="text-center">{{ o.payment_method }}</td>
-                                                                        <td class="text-center">{{ o.sub_total }}</td>
-                                                                        <td class="text-center">{{ o.balance }}</td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                    {% for po in purchase_order %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ po.purchase_order_date }}</td>
-                                                                        <td class="text-center">Purchase Order</td>
-                                                                        <td class="text-center">{{ po.sales_order_number }}</td>
-                                                                        <td class="text-center">{{ po.payment_method }}</td>
-                                                                        <td class="text-center">{{ po.sub_total }}</td>
-                                                                        <td class="text-center">{{ po.balance }}</td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                    {% for i in invoice_order %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ i.date }}</td>
-                                                                        <td class="text-center">Invoice Order</td>
-                                                                        <td class="text-center">{{ i.invoice_number }}</td>
-                                                                        <td class="text-center">{{ i.payment_method }}</td>
-                                                                        <td class="text-center">{{ i.sub_total }}</td>
-                                                                        <td class="text-center">{{ i.balance }}</td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                    {% for d in deliverychallan %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ d.challan_date }}</td>
-                                                                        <td class="text-center">Delivery Challan</td>
-                                                                        <td class="text-center">{{ d.challan_number }}</td>
-                                                                        <td class="text-center"></td>
-                                                                        <td class="text-center">{{ d.sub_total }}</td>
-                                                                        <td class="text-center">{{ d.balance }}</td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                    {% for d in recurringinvoice %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ d.start_date }}</td>
-                                                                        <td class="text-center">Recurring Invoice</td>
-                                                                        <td class="text-center">{{ d.rec_invoice_no }}</td>
-                                                                        <td class="text-center">{{ d.payment_method }}</td>
-                                                                        <td class="text-center">{{ d.subtotal }}</td>
-                                                                        <td class="text-center">{{ d.balance }}</td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                    {% for d in estimate %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ d.estimate_date }}</td>
-                                                                        <td class="text-center">Estimate</td>
-                                                                        <td class="text-center">{{ d.estimate_number }}</td>
-                                                                        <td class="text-center"></td>
-                                                                        <td class="text-center">{{ d.sub_total }}</td>
-                                                                        <td class="text-center"></td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                    {% for d in creditnote %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ d.credit_note_date }}</td>
-                                                                        <td class="text-center">Credit note</td>
-                                                                        <td class="text-center">{{ d.credit_note_number }}</td>
-                                                                        <td class="text-center">{{d.payment_method}}</td>
-                                                                        <td class="text-center">{{ d.sub_total }}</td>
-                                                                        <td class="text-center">{{ d.balance }}</td>
-                                                                    </tr>
-                                                                    {% endfor %}
                                                                     
-                                                                    {% for d in recurringinvoice %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ d.start_date }}</td>
-                                                                        <td class="text-center">Recurring Invoice</td>
-                                                                        <td class="text-center">{{ d.rec_invoice_no }}</td>
-                                                                        <td class="text-center">{{d.payment_method}}</td>
-                                                                        <td class="text-center">{{ d.subtotal }}</td>
-                                                                        <td class="text-center">{{ d.balance }}</td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                    {% for d in retainerinvoice %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ d.retainer_invoice_date }}</td>
-                                                                        <td class="text-center">Retainer Invoice</td>
-                                                                        <td class="text-center">{{ d.retainer_invoice_number }}</td>
-                                                                        <td class="text-center">{{d.payment_method}}</td>
-                                                                        <td class="text-center">{{ d.total_amount }}</td>
-                                                                        <td class="text-center">{{ d.balance }}</td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                    {% for d in bill %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ d.Bill_Date }}</td>
-                                                                        <td class="text-center">Bill</td>
-                                                                        <td class="text-center">{{ d.Bill_Number }}</td>
-                                                                        <td class="text-center">{{d.Payment_Method}}</td>
-                                                                        <td class="text-center">{{ d.Sub_Total }}</td>
-                                                                        <td class="text-center">{{ d.Balance }}</td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                    {% for d in recurring_bill %}
-                                                                    <tr>
-                                                                        <td class="text-center">{{ d.rec_bill_date }}</td>
-                                                                        <td class="text-center">Recurring Bill</td>
-                                                                        <td class="text-center">{{ d.recc_bill_no }}</td>
-                                                                        <td class="text-center">{{d.payment_type}}</td>
-                                                                        <td class="text-center">{{ d.sub_total }}</td>
-                                                                        <td class="text-center">{{ d.bal }}</td>
-                                                                    </tr>
-                                                                    {% endfor %}
+                                                                        {% for o in order %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ o.sales_order_date }}</td>
+                                                                            <td class="text-center">Sale Order</td>
+                                                                            <td class="text-center">{{ o.sales_order_number }}</td>
+                                                                            <td class="text-center">{{ o.payment_method }}</td>
+                                                                            <td class="text-center">{{ o.sub_total }}</td>
+                                                                            <td class="text-center">{{ o.balance }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for po in purchase_order %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ po.purchase_order_date }}</td>
+                                                                            <td class="text-center">Purchase Order</td>
+                                                                            <td class="text-center">{{ po.sales_order_number }}</td>
+                                                                            <td class="text-center">{{ po.payment_method }}</td>
+                                                                            <td class="text-center">{{ po.sub_total }}</td>
+                                                                            <td class="text-center">{{ po.balance }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for i in invoice_order %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ i.date }}</td>
+                                                                            <td class="text-center">Invoice Order</td>
+                                                                            <td class="text-center">{{ i.invoice_number }}</td>
+                                                                            <td class="text-center">{{ i.payment_method }}</td>
+                                                                            <td class="text-center">{{ i.sub_total }}</td>
+                                                                            <td class="text-center">{{ i.balance }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for d in deliverychallan %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.challan_date }}</td>
+                                                                            <td class="text-center">Delivery Challan</td>
+                                                                            <td class="text-center">{{ d.challan_number }}</td>
+                                                                            <td class="text-center"></td>
+                                                                            <td class="text-center">{{ d.sub_total }}</td>
+                                                                            <td class="text-center">{{ d.balance }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for d in recurringinvoice %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.start_date }}</td>
+                                                                            <td class="text-center">Recurring Invoice</td>
+                                                                            <td class="text-center">{{ d.rec_invoice_no }}</td>
+                                                                            <td class="text-center">{{ d.payment_method }}</td>
+                                                                            <td class="text-center">{{ d.subtotal }}</td>
+                                                                            <td class="text-center">{{ d.balance }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for d in estimate %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.estimate_date }}</td>
+                                                                            <td class="text-center">Estimate</td>
+                                                                            <td class="text-center">{{ d.estimate_number }}</td>
+                                                                            <td class="text-center"></td>
+                                                                            <td class="text-center">{{ d.sub_total }}</td>
+                                                                            <td class="text-center"></td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for d in creditnote %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.credit_note_date }}</td>
+                                                                            <td class="text-center">Credit Note</td>
+                                                                            <td class="text-center">{{ d.credit_note_number }}</td>
+                                                                            <td class="text-center">{{ d.payment_method }}</td>
+                                                                            <td class="text-center">{{ d.sub_total }}</td>
+                                                                            <td class="text-center">{{ d.balance }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for d in debitnote %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.debitnote_date }}</td>
+                                                                            <td class="text-center">Debit Note</td>
+                                                                            <td class="text-center">{{ d.debitnote_no }}</td>
+                                                                            <td class="text-center">{{ d.payment_method }}</td>
+                                                                            <td class="text-center">{{ d.subtotal }}</td>
+                                                                            <td class="text-center">{{ d.balance }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        
+                                                                        {% for d in expense %}
+                                                                        
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.date }}</td>
+                                                                            <td class="text-center">Expense</td>
+                                                                            <td class="text-center">{{ d.expense_number }}</td>
+                                                                            <td class="text-center">{{ d.payment_type }}</td>
+                                                                            <td class="text-center">{{ d.amount }}</td>
+                                                                            <td class="text-center">{{ d.balance }}</td>
+                                                                        </tr>
+                                                                        
+                                                                        {% endfor %}
+                                                                        {% for d in recurring_expense %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.exp_date }}</td>
+                                                                            <td class="text-center">Recurring Expense</td>
+                                                                            <td class="text-center">{{ d.expense_number }}</td>
+                                                                            <td class="text-center">{{ d.Payment_Method }}</td>
+                                                                            <td class="text-center">{{ d.amount }}</td>
+                                                                            <td class="text-center">{{ d.balance }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for d in retainerinvoice %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.retainer_invoice_date }}</td>
+                                                                            <td class="text-center">Retainer Invoice</td>
+                                                                            <td class="text-center">{{ d.retainer_invoice_number }}</td>
+                                                                            <td class="text-center">{{ d.payment_method }}</td>
+                                                                            <td class="text-center">{{ d.total_amount }}</td>
+                                                                            <td class="text-center">{{ d.balance }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for d in bills %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.Bill_Date }}</td>
+                                                                            <td class="text-center">Bill</td>
+                                                                            <td class="text-center">{{ d.Bill_Number }}</td>
+                                                                            <td class="text-center">{{ d.Payment_Method }}</td>
+                                                                            <td class="text-center">{{ d.Sub_Total }}</td>
+                                                                            <td class="text-center">{{ d.Balance }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for d in recurring_bill %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.rec_bill_date }}</td>
+                                                                            <td class="text-center">Recurring Bill</td>
+                                                                            <td class="text-center">{{ d.recc_bill_no }}</td>
+                                                                            <td class="text-center">{{ d.payment_type }}</td>
+                                                                            <td class="text-center">{{ d.sub_total }}</td>
+                                                                            <td class="text-center">{{ d.bal }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                        {% for d in manual_journel %}
+                                                                        <tr>
+                                                                            <td class="text-center">{{ d.date }}</td>
+                                                                            <td class="text-center">Manual Journel</td>
+                                                                            <td class="text-center">{{ d.journal_no }}</td>
+                                                                            <td class="text-center">{{ d.payment_type }}</td>
+                                                                            <td class="text-center">{{ d.sub_total }}</td>
+                                                                            <td class="text-center">{{ d.bal }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    
                                                                 </tbody>
                                                             </table>
                                                         </section>
@@ -475,13 +481,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                                 <div class="col-10">
                                                                     
                                                                     <div class="row mb-2">
-                                                                        <div class="col-4 ">Total Sale: <p id="sales" style="font-size: 19px;">₹<span id="totalsale"></span></p></div>
-                                                                        <div class="col-4">Total Purchase: <p id="purchase" style="font-size: 19px;">₹<span id="totalpurchase"></span></p></div>
-                                                                        <div class="col-4">Total Expence: <p id="expense" style="font-size: 19px;">₹{{ total_expense_sum }}<span id="totalexpence"></span></p></div>
+                                                                        <div class="col-4 ">Total Sale: <p id="sales" style="font-size: 19px;">₹{{ total_sale }}<span id="totalsale"></span></p></div>
+                                                                        <div class="col-4">Total Purchase: <p id="purchase" style="font-size: 19px;">₹{{ total_purchase }}<span id="totalpurchase"></span></p></div>
+                                                                        <div class="col-4">Total Expence: <p id="expense" style="font-size: 19px;">₹{{ total_expense }}<span id="totalexpence"></span></p></div>
                                                                     </div>
                                                                     <div class="row mb-2">
-                                                                        <div class="col-4 ">Total Money in: <p id="sales" style="font-size: 19px;">₹<span id="totalmoneyin"></span></p></div>
-                                                                        <div class="col-4">Total Money out :<p id="expense" style="font-size: 19px;">₹<span id="totalmoneyout"></span></p></div>
+                                                                        <div class="col-4 ">Total Money in: <p id="sales" style="font-size: 19px;">₹{{ total_money_in }}<span id="totalmoneyin"></span></p></div>
+                                                                        <div class="col-4">Total Money out :<p id="expense" style="font-size: 19px;">₹{{ total_money_out }}<span id="totalmoneyout"></span></p></div>
                                                                         
                                                                     </div>
                                                 
@@ -510,13 +516,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <div class="modal-dialog">
           <div class="modal-content" style="background-color: #3b3b3b;">
             <div class="modal-header">
-              <h3 class="modal-title text-light" id="exampleModalLabel">Share Party Statement</h3>
-              <button type="button" class="btn close" data-dismiss="modal" aria-label="Close">
+              <h3 class="modal-title text-light" id="exampleModalLabel">Share Outstanding_Receivables</h3>
+              <button type="button" class="btn close" onclick="closeModal()" aria-label="Close">
                 <span aria-hidden="true" style="font-size: x-large;">&times;</span>
               </button>
             </div>
             <div class="modal-body mx-3" style="background-color: #000;">
-              <form action="{% url 'party_statement_email' %}" method="post" id="share_to_email_form" class="needs-validation" novalidate enctype="multipart/form-data">
+              <form action="{% url 'party_statement_customize_email' %}" method="post" id="share_to_email_form" class="needs-validation" novalidate enctype="multipart/form-data">
                 {%csrf_token%}
                 <div class="form-group">
                     <label for="emailIds">Email IDs</label>
@@ -534,7 +540,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                   <div class="col-md-4">
                     <div class="d-flex">
                       <button class="btn save_btn btn-outline-warning mt-2 my-4 mx-2 w-50" type="button" id="share_with_email">Send</button> 
-                      <input class="btn save_btn btn-outline-warning mt-2 my-4 mx-2 w-50" data-dismiss="modal" type="reset" value="Close">
+                      <input class="btn save_btn btn-outline-warning mt-2 my-4 mx-2 w-50" onclick="closeModal()" type="reset" value="Close" >
+                      
                     </div>
                   </div>
                   <div class="col-md-4"></div>
@@ -545,8 +552,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
           </div>
         </div>
       </div>
+      
       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
       <script>
+         function closeModal() {
+        $('#shareToEmail').modal('hide'); 
+        }
         $(document).ready(function(){
             var trans = `{{transaction}}`;
             // alert(trans)
@@ -560,25 +571,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                 contentDiv.style.display = "none";
             } else {
                 contentDiv.style.display = "block";
-                // Position the div just below the button
-                // var buttonRect = event.target.getBoundingClientRect();
-                // contentDiv.style.top = (buttonRect.bottom + window.scrollY) + "px";
-                // contentDiv.style.left = buttonRect.left + "px";
+                
             }
         }
-        function updateVendorStatus() {
-        var select = document.getElementById("salesTransactions");
-        var selectedOption = select.options[select.selectedIndex];
-        var isVendor = selectedOption.getAttribute("data-vendor") === "true";
-        var isBills = selectedOption.getAttribute("data-bills") === "true";
-        var isRcBill = selectedOption.getAttribute("data-rcbill") === "true";
         
-        if (isVendor || isBills || isRcBill) {
-            document.getElementById("isVendor").value = "true";
-        } else {
-            document.getElementById("isVendor").value = "false";
-        }
-    }
+        
     
         $('#toggleEmailModal').on('click',function(){
             var st = $('#startDate').val();
@@ -639,12 +636,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
         totalReceivables += runningBalance;
     });
-
-    $('#totalsale').text(totalSale.toFixed(2));
-    $('#totalpurchase').text(totalPurchase.toFixed(2));
-    $('#totalexpense').text(totalExpense.toFixed(2));
-    $('#totalmoneyin').text(totalMoneyIn.toFixed(2));
-    $('#totalmoneyout').text(totalMoneyOut.toFixed(2));
+    
+    
+    
     $('#Totalreceivables').text(totalReceivables.toFixed(2));
 }
 
@@ -782,6 +776,9 @@ $(document).ready(function() {
         
         sortOrder = !sortOrder;
         }
+        function closeModal() {
+        $('#shareToEmail').modal('hide');
+        }    
         
     </script>
       

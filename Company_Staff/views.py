@@ -50775,6 +50775,8 @@ def eway_bill_coustomize_email(request):
             messages.error(request, f'{e}')
             return redirect(e_waybillsCustomized)
         
+from django.db.models import Sum
+
 def party_statement(request):
     context = {}
     if 'login_id' in request.session:
@@ -50797,74 +50799,93 @@ def party_statement(request):
         retainerinvoice = RetainerInvoice.objects.filter(company=cmp)
         estimate = Estimate.objects.filter(company=cmp)
         creditnote = Credit_Note.objects.filter(company=cmp)
+        debittnote = debitnote.objects.filter(company=cmp)
         bill = Bill.objects.filter(Company_id=cmp.id)
         recurring_bill = Recurring_bills.objects.filter(company=cmp)
+        recurring_expense = Recurring_Expense.objects.filter(company=cmp)
+        expense = Expense.objects.filter(company=cmp)
+        manual_journel = Journal.objects.filter(company=cmp)
         allmodules = ZohoModules.objects.get(company=cmp)
 
-        recurringinvoice_ids = recurringinvoice.values_list('customer_id', flat=True).distinct()
-        rcinvoice = Customer.objects.filter(id__in=recurringinvoice_ids)
+        customers = Customer.objects.filter(company=cmp)
+        vendors = Vendor.objects.filter(company=cmp)
 
-        recurringbill_ids = recurring_bill.values_list('vendor_details_id', flat=True).distinct()
-        rcbill = Vendor.objects.filter(id__in=recurringbill_ids)
-
-        invoice_ids = invoice_order.values_list('customer_id', flat=True).distinct()
-        invo = Customer.objects.filter(id__in=invoice_ids)
-
-        bill_ids = bill.values_list('Vendor_id', flat=True).distinct()
-        bills = Vendor.objects.filter(id__in=bill_ids)
-
-        estimate_ids = estimate.values_list('customer_id', flat=True).distinct()
-        est = Customer.objects.filter(id__in=estimate_ids)
-
-        creditnote_ids = creditnote.values_list('customer_id', flat=True).distinct()
-        cnote = Customer.objects.filter(id__in=creditnote_ids)
-
-        retainerinvoice_ids = retainerinvoice.values_list('customer_name_id', flat=True).distinct()
-        rtinvoice = Customer.objects.filter(id__in=retainerinvoice_ids)
-
-        deliverychallan_ids = deliverychallan.values_list('customer_id', flat=True).distinct()
-        challan = Customer.objects.filter(id__in=deliverychallan_ids)
-
-        customer_ids = order.values_list('customer_id', flat=True).distinct()
-        customers = Customer.objects.filter(id__in=customer_ids)
-
-        vendor_ids = purchase_order.values_list('vendor_id', flat=True).distinct()
-        vendors = Vendor.objects.filter(id__in=vendor_ids)
-
-        total_recurring_expense = Recurring_Expense.objects.filter(company=cmp).aggregate(Sum('amount'))['amount__sum'] or 0
         total_expense = Expense.objects.filter(company=cmp).aggregate(Sum('amount'))['amount__sum'] or 0
-        total_expense_sum = total_recurring_expense + total_expense
+        total_recurring_invoice = RecurringInvoice.objects.filter(company=cmp).aggregate(Sum('subtotal'))['subtotal__sum'] or 0
+        total_retainer_invoice = RetainerInvoice.objects.filter(company=cmp).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        total_sale_order = SaleOrder.objects.filter(company=cmp).aggregate(Sum('grand_total'))['grand_total__sum'] or 0
+        total_invoice = invoice.objects.filter(company=cmp).aggregate(Sum('grand_total'))['grand_total__sum'] or 0
+        total_credit_note = Credit_Note.objects.filter(company=cmp).aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+        total_recurring_invoice = Decimal(total_recurring_invoice)
+        total_retainer_invoice = Decimal(total_retainer_invoice)
+        total_sale_order = Decimal(total_sale_order)
+        total_invoice = Decimal(total_invoice)
+        total_credit_note = Decimal(total_credit_note)
+        total_money_in =  total_recurring_invoice + total_retainer_invoice + total_sale_order + total_invoice + total_credit_note
+
+        total_bill = Bill.objects.filter(Company_id=cmp.id).aggregate(Sum('Sub_Total'))['Sub_Total__sum'] or 0
+        total_recurring_bills = Recurring_bills.objects.filter(company=cmp).aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+        total_purchaseorder = PurchaseOrder.objects.filter(company=cmp).aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+        total_debit_note = debitnote.objects.filter(company=cmp).aggregate(Sum('subtotal'))['subtotal__sum'] or 0
+        total_bill = Decimal(total_bill)
+        total_recurring_bills = Decimal(total_recurring_bills)
+        total_purchaseorder = Decimal(total_purchaseorder)
+        total_debit_note = Decimal(total_debit_note)
+        total_money_out = total_bill + total_recurring_bills + total_purchaseorder + total_debit_note
+
+        total_bill = Bill.objects.filter(Company_id=cmp.id).aggregate(Sum('Sub_Total'))['Sub_Total__sum'] or 0
+        total_recurring_bills = Recurring_bills.objects.filter(company=cmp).aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+        total_bill = Decimal(total_bill)
+        total_recurring_bills = Decimal(total_recurring_bills)
+        total_purchase = total_bill + total_recurring_bills
+
+        total_retainer_invoice = RetainerInvoice.objects.filter(company=cmp).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        total_recurring_invoice = RecurringInvoice.objects.filter(company=cmp).aggregate(Sum('subtotal'))['subtotal__sum'] or 0
+        total_invoice = invoice.objects.filter(company=cmp).aggregate(Sum('grand_total'))['grand_total__sum'] or 0
+        total_recurring_invoice = Decimal(total_recurring_invoice)
+        total_retainer_invoice = Decimal(total_retainer_invoice)
+        total_invoice = Decimal(total_invoice)
+        total_sale = total_retainer_invoice + total_recurring_invoice + total_invoice
 
         context = {
             'allmodules': allmodules,
             'details': dash_details,
             'log_details': log_details,
-            
+            'expense': expense,
+            'manual_journel':manual_journel,
             'order': order,
+            'recurring_expense': recurring_expense,
+            'debitnote': debittnote,
             'purchase_order': purchase_order,
             'customers': customers,  
             'vendors': vendors,
             'companyName': cmp.company_name,  
             'invoice_order': invoice_order,
             'deliverychallan': deliverychallan,
-            'challan': challan,
+            'challan': deliverychallan,
             'recurringinvoice': recurringinvoice,
-            'rcinvoice': rcinvoice,
+            'rcinvoice': recurringinvoice,
             'recurring_bill': recurring_bill,
             'retainerinvoice': retainerinvoice,
-            'rtinvoice': rtinvoice,
+            'rtinvoice': retainerinvoice,
             'estimate': estimate,
-            'invo':invo,
-            'est': est,
-            'bills': bills,
-            'bill': bill,
-            'rcbill': rcbill,
+            'invo': invoice_order,
+            'est': estimate,
+            'bills': bill,
+            'rcbill': recurring_bill,
             'creditnote': creditnote,
-            'cnote': cnote,
-            'total_expense_sum': total_expense_sum,
+            'cnote': creditnote,
+            'total_money_in':total_money_in,
+            'total_expense':total_expense,
+            'total_money_out':total_money_out,
+            'total_purchase':total_purchase,
+            'total_sale':total_sale,
+            
         }
 
     return render(request, 'zohomodules/party_reports/partystatement.html', context)
+
+
 
 
 
@@ -50876,83 +50897,143 @@ def party_statementcustomized(request):
         if log_details.user_type == 'Company':
             cmp = CompanyDetails.objects.get(login_details=log_details)
         else:
-            comp_details = StaffDetails.objects.get(login_details=log_details).company
+            cmp = StaffDetails.objects.get(login_details=log_details).company
 
         allmodules = ZohoModules.objects.get(company=cmp, status='New')
-        total_recurring_expense = Recurring_Expense.objects.filter(company=cmp).aggregate(Sum('amount'))['amount__sum'] or 0
-        total_expense = Expense.objects.filter(company=cmp).aggregate(Sum('amount'))['amount__sum'] or 0
-        total_expense_sum = total_recurring_expense + total_expense
+        
+        customers = Customer.objects.filter(company=cmp)
+        vendors = Vendor.objects.filter(company=cmp)
 
         if request.method == 'GET':
             trans = request.GET.get('transactions', None)
-
             startDate = request.GET.get('from_date', None)
             endDate = request.GET.get('to_date', None)
 
-            order = SaleOrder.objects.filter(company=cmp)
-            purchase_order = PurchaseOrder.objects.filter(company=cmp)
-            deliverychallan = Delivery_challan.objects.filter(company=cmp)
-            recurringinvoice = RecurringInvoice.objects.filter(company=cmp)
-            retainerinvoice = RetainerInvoice.objects.filter(company=cmp)
-            invoice_order = invoice.objects.filter(company=cmp)
-            estimate = Estimate.objects.filter(company=cmp)
-            creditnote = Credit_Note.objects.filter(company=cmp)
-            bill = Bill.objects.filter(Company_id=cmp.id)
-            recurring_bill = Recurring_bills.objects.filter(company=cmp)
+            selected_orders = SaleOrder.objects.filter(company=cmp)
+            selected_purchase_orders = PurchaseOrder.objects.filter(company=cmp)
+            selected_recurring_expense = Recurring_Expense.objects.filter(company=cmp)
+            selected_expense = Expense.objects.filter(company=cmp)
+            selected_debitnote = debitnote.objects.filter(company=cmp)
+            selected_deliverychallans = Delivery_challan.objects.filter(company=cmp)
+            selected_recurringinvoices = RecurringInvoice.objects.filter(company=cmp)
+            selected_estimates = Estimate.objects.filter(company=cmp)
+            selected_invoice = invoice.objects.filter(company=cmp)
+            selected_creditnotes = Credit_Note.objects.filter(company=cmp)
+            selected_bills = Bill.objects.filter(Company=cmp)
+            selected_recurring_bills = Recurring_bills.objects.filter(company=cmp)
+            selected_manual_journel = Journal.objects.filter(company=cmp)
+            selected_retainerinvoices = RetainerInvoice.objects.filter(company=cmp)
 
-            if startDate and endDate:
-                date_range = [startDate, endDate]
-                order = order.filter(sales_order_date__range=date_range)
-                purchase_order = purchase_order.filter(purchase_order_date__range=date_range)
-                deliverychallan = deliverychallan.filter(challan_date__range=date_range)
-                recurringinvoice = recurringinvoice.filter(start_date__range=date_range)
-                retainerinvoice = retainerinvoice.filter(retainer_invoice_date__range=date_range)
-                estimate = estimate.filter(estimate_date__range=date_range)
-                creditnote = creditnote.filter(credit_note_date__range=date_range)
-                bill = bill.filter(Bill_Date__range=date_range)
-                recurring_bill = recurring_bill.filter(rec_bill_date__range=date_range)
-
-            selected_order = None
-            selected_purchase_order = None
-            selected_deliverychallan = None
-            selected_recurringinvoice = None
-            selected_estimate = None
-            selected_creditnote = None
-            selected_bill = None
-            selected_recurring_bill = None
-            selected_retainerinvoice = None
-
-            if trans:
+            if trans and trans != "all":
                 trans_parts = trans.split()
                 if len(trans_parts) >= 3:
                     trans_id = trans_parts[0]
                     trans_fname = trans_parts[1]
                     trans_lname = ' '.join(trans_parts[2:])
-                    is_vendor = Vendor.objects.filter(id=trans_id, first_name=trans_fname, last_name=trans_lname).exists()
-                    is_customer = Customer.objects.filter(id=trans_id, first_name=trans_fname, last_name=trans_lname).exists()
-
+                    
+                    is_vendor = Vendor.objects.filter(id=trans_id, first_name=trans_fname, last_name=trans_lname, company=cmp).exists()
+                    
                     if is_vendor:
-                        selected_purchase_order = purchase_order.filter(vendor_id=trans_id)
-                        selected_bill = bill.filter(Vendor_id=trans_id)
-                        selected_recurring_bill = recurring_bill.filter(vendor_details_id=trans_id)
-                    elif is_customer:
-                        selected_order = order.filter(customer_id=trans_id)
-                        selected_deliverychallan = deliverychallan.filter(customer_id=trans_id)
-                        selected_recurringinvoice = recurringinvoice.filter(customer_id=trans_id)
-                        selected_retainerinvoice = retainerinvoice.filter(customer_name_id=trans_id)
-                        selected_estimate = estimate.filter(customer_id=trans_id)
-                        selected_creditnote = creditnote.filter(customer_id=trans_id)
+                        selected_purchase_orders = selected_purchase_orders.filter(vendor_id=trans_id)
+                        selected_bills = selected_bills.filter(Vendor_id=trans_id)
+                        selected_recurring_bills = selected_recurring_bills.filter(vendor_details_id=trans_id)
+                        selected_debitnote = selected_debitnote.filter(vendor_id=trans_id)
+                        selected_recurring_expense = selected_recurring_expense.filter(vendor_id=trans_id)  
+                        selected_expense = selected_expense.filter(vendor_name=trans_fname)  
+
+                        selected_orders = SaleOrder.objects.none()
+                        selected_invoice = invoice.objects.none()
+                        selected_deliverychallans = Delivery_challan.objects.none()
+                        selected_recurringinvoices = RecurringInvoice.objects.none()
+                        selected_retainerinvoices = RetainerInvoice.objects.none()
+                        selected_estimates = Estimate.objects.none()
+                        selected_creditnotes = Credit_Note.objects.none()
+                    else:
+                        is_customer = Customer.objects.filter(id=trans_id, first_name=trans_fname, last_name=trans_lname, company=cmp).exists()
+                        if is_customer:
+                            selected_orders = selected_orders.filter(customer_id=trans_id)
+                            selected_invoice = selected_invoice.filter(customer_id=trans_id)
+                            selected_deliverychallans = selected_deliverychallans.filter(customer_id=trans_id)
+                            selected_recurringinvoices = selected_recurringinvoices.filter(customer_id=trans_id)
+                            selected_retainerinvoices = selected_retainerinvoices.filter(customer_name_id=trans_id)
+                            selected_estimates = selected_estimates.filter(customer_id=trans_id)
+                            selected_creditnotes = selected_creditnotes.filter(customer_id=trans_id)
+                            
+                            selected_purchase_orders = PurchaseOrder.objects.none()
+                            selected_bills = Bill.objects.none()
+                            selected_recurring_bills = Recurring_bills.objects.none()
+                            selected_debitnote = debitnote.objects.none()
+                            selected_recurring_expense = Recurring_Expense.objects.none()
+                            selected_expense = Expense.objects.none()
+
+            if startDate and endDate:
+                selected_orders = selected_orders.filter(sales_order_date__range=[startDate, endDate])
+                selected_deliverychallans = selected_deliverychallans.filter(challan_date__range=[startDate, endDate])
+                selected_recurringinvoices = selected_recurringinvoices.filter(start_date__range=[startDate, endDate])
+                selected_retainerinvoices = selected_retainerinvoices.filter(retainer_invoice_date__range=[startDate, endDate])
+                selected_estimates = selected_estimates.filter(estimate_date__range=[startDate, endDate])
+                selected_creditnotes = selected_creditnotes.filter(credit_note_date__range=[startDate, endDate])
+                selected_invoice = selected_invoice.filter(date__range=[startDate, endDate])
+                
+                selected_purchase_orders = selected_purchase_orders.filter(purchase_order_date__range=[startDate, endDate])
+                selected_bills = selected_bills.filter(Bill_Date__range=[startDate, endDate])
+                selected_recurring_bills = selected_recurring_bills.filter(rec_bill_date__range=[startDate, endDate])
+                selected_debitnote = selected_debitnote.filter(debitnote_date__range=[startDate, endDate])
+                selected_recurring_expense = selected_recurring_expense.filter(exp_date__range=[startDate, endDate])  
+                selected_expense = selected_expense.filter(date__range=[startDate, endDate])
+
+            total_expense_amount = selected_expense.aggregate(Sum('amount'))['amount__sum'] or 0
+
+            total_bill = selected_bills.aggregate(Sum('Sub_Total'))['Sub_Total__sum'] or 0
+            total_recurring_bills = selected_recurring_bills.aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+            total_purchaseorder = selected_purchase_orders.aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+            total_debit_note = selected_debitnote.aggregate(Sum('subtotal'))['subtotal__sum'] or 0
+            total_bill = Decimal(total_bill)
+            total_recurring_bills = Decimal(total_recurring_bills)
+            total_purchaseorder = Decimal(total_purchaseorder)
+            total_debit_note = Decimal(total_debit_note)
+            total_money_out = total_bill + total_recurring_bills + total_purchaseorder + total_debit_note
+
+           
+            total_recurring_invoice = selected_recurringinvoices.aggregate(Sum('subtotal'))['subtotal__sum'] or 0
+            total_retainer_invoice = selected_retainerinvoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            total_sale_order = selected_orders.aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+            total_invoice = selected_invoice.aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+            total_credit_note = selected_creditnotes.aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+            total_recurring_invoice = Decimal(total_recurring_invoice)
+            total_retainer_invoice = Decimal(total_retainer_invoice)
+            total_sale_order = Decimal(total_sale_order)
+            total_invoice = Decimal(total_invoice)
+            total_credit_note = Decimal(total_credit_note)
+            total_money_in =  total_recurring_invoice + total_retainer_invoice + total_sale_order + total_invoice + total_credit_note
+
+            total_bill = selected_bills.aggregate(Sum('Sub_Total'))['Sub_Total__sum'] or 0
+            total_recurring_bills = selected_recurring_bills.aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+            total_bill = Decimal(total_bill)
+            total_recurring_bills = Decimal(total_recurring_bills)
+            total_purchase = total_bill + total_recurring_bills
+
+            total_recurring_invoice = selected_recurringinvoices.aggregate(Sum('subtotal'))['subtotal__sum'] or 0
+            total_retainer_invoice = selected_retainerinvoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            total_invoice = selected_invoice.aggregate(Sum('sub_total'))['sub_total__sum'] or 0
+            total_recurring_invoice = Decimal(total_recurring_invoice)
+            total_retainer_invoice = Decimal(total_retainer_invoice)
+            total_invoice = Decimal(total_invoice)
+            total_sale = total_retainer_invoice + total_recurring_invoice + total_invoice
 
             context = {
-                'order': list(selected_order) if selected_order else [],
-                'purchase_order': list(selected_purchase_order) if selected_purchase_order else [],
-                'deliverychallan': list(selected_deliverychallan) if selected_deliverychallan else [],
-                'recurringinvoice': list(selected_recurringinvoice) if selected_recurringinvoice else [],
-                'estimate': list(selected_estimate) if selected_estimate else [],
-                'creditnote': list(selected_creditnote) if selected_creditnote else [],
-                'bill': list(selected_bill) if selected_bill else [],
-                'recurring_bill': list(selected_recurring_bill) if selected_recurring_bill else [],
-                'retainerinvoice': list(selected_retainerinvoice) if selected_retainerinvoice else [],
+                'order': selected_orders,
+                'purchase_order': selected_purchase_orders,
+                'recurring_expense': selected_recurring_expense,  
+                'deliverychallan': selected_deliverychallans,
+                'recurringinvoice': selected_recurringinvoices,
+                'estimate': selected_estimates,
+                'creditnote': selected_creditnotes,
+                'bill': selected_bills,
+                'invoice': selected_invoice,
+                'recurring_bill': selected_recurring_bills,
+                'retainerinvoice': selected_retainerinvoices,
+                'debitnote': selected_debitnote,  
                 'log_details': log_details,
                 'allmodules': allmodules,
                 'startDate': startDate,
@@ -50961,7 +51042,14 @@ def party_statementcustomized(request):
                 'first_name': trans_fname if 'trans_fname' in locals() else None,
                 'last_name': trans_lname if 'trans_lname' in locals() else None,
                 'companyName': cmp.company_name,
-                'total_expense_sum': total_expense_sum
+                'customers': customers,
+                'vendors': vendors,
+                'selected_expense': selected_expense,
+                'total_expense_amount': total_expense_amount,
+                'total_money_out':total_money_out,
+                'total_money_in':total_money_in,
+                'total_purchase':total_purchase,
+                'total_sale':total_sale
             }
 
             return render(request, 'zohomodules/party_reports/partystatementcustomized.html', context)
@@ -50969,6 +51057,7 @@ def party_statementcustomized(request):
             return redirect('/')
     else:
         return redirect('/')
+
 
 
 
@@ -51005,72 +51094,49 @@ def party_statement_email(request):
                 retainerinvoice = RetainerInvoice.objects.filter(company=cmp)
                 estimate = Estimate.objects.filter(company=cmp)
                 creditnote = Credit_Note.objects.filter(company=cmp)
+                debittnote = debitnote.objects.filter(company=cmp)
                 bill = Bill.objects.filter(Company_id=cmp.id)
                 recurring_bill = Recurring_bills.objects.filter(company=cmp)
-                allmodules = ZohoModules.objects.get(company=cmp)
+                recurring_expense = Recurring_Expense.objects.filter(company=cmp)
+                expense = Expense.objects.filter(company=cmp)
+                manual_journel = Journal.objects.filter(company=cmp)
+                
 
-                recurringinvoice_ids = recurringinvoice.values_list('customer_id', flat=True).distinct()
-                rcinvoice = Customer.objects.filter(id__in=recurringinvoice_ids)
-
-                recurringbill_ids = recurring_bill.values_list('vendor_details_id', flat=True).distinct()
-                rcbill = Vendor.objects.filter(id__in=recurringbill_ids)
-
-                invoice_ids = invoice_order.values_list('customer_id', flat=True).distinct()
-                invo = Customer.objects.filter(id__in=customer_ids)
-
-                bill_ids = bill.values_list('Vendor_id', flat=True).distinct()
-                bills = Vendor.objects.filter(id__in=bill_ids)
-
-                estimate_ids = estimate.values_list('customer_id', flat=True).distinct()
-                est = Customer.objects.filter(id__in=estimate_ids)
-
-                creditnote_ids = creditnote.values_list('customer_id', flat=True).distinct()
-                cnote = Customer.objects.filter(id__in=creditnote_ids)
-
-                retainerinvoice_ids = retainerinvoice.values_list('customer_name_id', flat=True).distinct()
-                rtinvoice = Customer.objects.filter(id__in=retainerinvoice_ids)
-
-                deliverychallan_ids = deliverychallan.values_list('customer_id', flat=True).distinct()
-                challan = Customer.objects.filter(id__in=deliverychallan_ids)
-
-                customer_ids = order.values_list('customer_id', flat=True).distinct()
-                customers = Customer.objects.filter(id__in=customer_ids)
-
-                vendor_ids = purchase_order.values_list('vendor_id', flat=True).distinct()
-                vendors = Vendor.objects.filter(id__in=vendor_ids)
-
-                total_recurring_expense = Recurring_Expense.objects.filter(company=cmp).aggregate(Sum('amount'))['amount__sum'] or 0
-                total_expense = Expense.objects.filter(company=cmp).aggregate(Sum('amount'))['amount__sum'] or 0
-                total_expense_sum = total_recurring_expense + total_expense
+                customers = Customer.objects.filter(company=cmp)
+                vendors = Vendor.objects.filter(company=cmp)
 
                 context = {
-                    'allmodules': allmodules,
+                    
                     'details': dash_details,
                     'log_details': log_details,
-                    
+                    'expense': expense,
+                    'manual_journel':manual_journel,
                     'order': order,
+                    'recurring_expense': recurring_expense,
+                    'debitnote': debittnote,
                     'purchase_order': purchase_order,
                     'customers': customers,  
                     'vendors': vendors,
                     'companyName': cmp.company_name,  
                     'invoice_order': invoice_order,
                     'deliverychallan': deliverychallan,
-                    'challan': challan,
+                    'challan': deliverychallan,
                     'recurringinvoice': recurringinvoice,
-                    'rcinvoice': rcinvoice,
+                    'rcinvoice': recurringinvoice,
                     'recurring_bill': recurring_bill,
                     'retainerinvoice': retainerinvoice,
-                    'rtinvoice': rtinvoice,
+                    'rtinvoice': retainerinvoice,
                     'estimate': estimate,
-                    'est': est,
-                    'bills': bills,
-                    'bill': bill,
-                    'rcbill': rcbill,
+                    'invo': invoice_order,
+                    'est': estimate,
+                    'bills': bill,
+                    'rcbill': recurring_bill,
                     'creditnote': creditnote,
-                    'invo':invo,
-                    'cnote': cnote,
-                    'total_expense_sum': total_expense_sum,
+                    'cnote': creditnote,
+                    
+                    
                 }
+
 
 
                 template_path = 'zohomodules/party_reports/partystatement_email.html'
@@ -51118,111 +51184,117 @@ def party_statement_customize_email(request):
                 emails_list = [email.strip() for email in emails_string.split(',')]
                 email_message = request.POST['email_message']
                 trans = request.GET.get('transactions', None)
-                is_vendor = request.GET.get('is_vendor', 'false') == 'true'
-                
-                startDate = request.POST['start']
-                endDate = request.POST['end']
-                if startDate == "":
-                    startDate = None
-                if endDate == "":
-                    endDate = None
+                startDate = request.GET.get('from_date', None)
+                endDate = request.GET.get('to_date', None)
 
-                order = SaleOrder.objects.filter(company=cmp)
-                purchase_order = PurchaseOrder.objects.filter(company=cmp)
-                deliverychallan = Delivery_challan.objects.filter(company=cmp)
-                recurringinvoice = RecurringInvoice.objects.filter(company=cmp)
-                estimate = Estimate.objects.filter(company=cmp)
-                creditnote = Credit_Note.objects.filter(company=cmp)
+                selected_orders = SaleOrder.objects.filter(company=cmp)
+                selected_purchase_orders = PurchaseOrder.objects.filter(company=cmp)
+                selected_recurring_expense = Recurring_Expense.objects.filter(company=cmp)
+                selected_expense = Expense.objects.filter(company=cmp)
+                selected_debitnote = debitnote.objects.filter(company=cmp)
+                selected_deliverychallans = Delivery_challan.objects.filter(company=cmp)
+                selected_recurringinvoices = RecurringInvoice.objects.filter(company=cmp)
+                selected_estimates = Estimate.objects.filter(company=cmp)
+                selected_invoice = invoice.objects.filter(company=cmp)
+                selected_creditnotes = Credit_Note.objects.filter(company=cmp)
+                selected_bills = Bill.objects.filter(Company=cmp)
+                selected_recurring_bills = Recurring_bills.objects.filter(company=cmp)
+                selected_manual_journel = Journal.objects.filter(company=cmp)
+                selected_retainerinvoices = RetainerInvoice.objects.filter(company=cmp)
 
-                recurringinvoice_ids = recurringinvoice.values_list('customer_id', flat=True).distinct()
-                rcinvoice = Customer.objects.filter(id__in=recurringinvoice_ids)
+                if trans and trans != "all":
+                    trans_parts = trans.split()
+                    if len(trans_parts) >= 3:
+                        trans_id = trans_parts[0]
+                        trans_fname = trans_parts[1]
+                        trans_lname = ' '.join(trans_parts[2:])
+                        
+                        is_vendor = Vendor.objects.filter(id=trans_id, first_name=trans_fname, last_name=trans_lname, company=cmp).exists()
+                        
+                        if is_vendor:
+                            selected_purchase_orders = selected_purchase_orders.filter(vendor_id=trans_id)
+                            selected_bills = selected_bills.filter(Vendor_id=trans_id)
+                            selected_recurring_bills = selected_recurring_bills.filter(vendor_details_id=trans_id)
+                            selected_debitnote = selected_debitnote.filter(vendor_id=trans_id)
+                            selected_recurring_expense = selected_recurring_expense.filter(vendor_id=trans_id)  
+                            selected_expense = selected_expense.filter(vendor_name=trans_fname)  
 
-                estimate_ids = estimate.values_list('customer_id', flat=True).distinct()
-                est = Customer.objects.filter(id__in=estimate_ids)
-
-                creditnote_ids = creditnote.values_list('customer_id', flat=True).distinct()
-                cnote = Customer.objects.filter(id__in=creditnote_ids)
-
-                customer_ids = order.values_list('customer_id', flat=True).distinct()
-                customers = Customer.objects.filter(id__in=customer_ids)
-
-                deliverychallan_ids = deliverychallan.values_list('customer_id', flat=True).distinct()
-                challan = Customer.objects.filter(id__in=deliverychallan_ids)
-
-                vendor_ids = purchase_order.values_list('vendor_id', flat=True).distinct()
-                vendors = Vendor.objects.filter(id__in=vendor_ids)
+                            selected_orders = SaleOrder.objects.none()
+                            selected_invoice = invoice.objects.none()
+                            selected_deliverychallans = Delivery_challan.objects.none()
+                            selected_recurringinvoices = RecurringInvoice.objects.none()
+                            selected_retainerinvoices = RetainerInvoice.objects.none()
+                            selected_estimates = Estimate.objects.none()
+                            selected_creditnotes = Credit_Note.objects.none()
+                        else:
+                            is_customer = Customer.objects.filter(id=trans_id, first_name=trans_fname, last_name=trans_lname, company=cmp).exists()
+                            if is_customer:
+                                selected_orders = selected_orders.filter(customer_id=trans_id)
+                                selected_invoice = selected_invoice.filter(customer_id=trans_id)
+                                selected_deliverychallans = selected_deliverychallans.filter(customer_id=trans_id)
+                                selected_recurringinvoices = selected_recurringinvoices.filter(customer_id=trans_id)
+                                selected_retainerinvoices = selected_retainerinvoices.filter(customer_name_id=trans_id)
+                                selected_estimates = selected_estimates.filter(customer_id=trans_id)
+                                selected_creditnotes = selected_creditnotes.filter(customer_id=trans_id)
+                                
+                                selected_purchase_orders = PurchaseOrder.objects.none()
+                                selected_bills = Bill.objects.none()
+                                selected_recurring_bills = Recurring_bills.objects.none()
+                                selected_debitnote = debitnote.objects.none()
+                                selected_recurring_expense = Recurring_Expense.objects.none()
+                                selected_expense = Expense.objects.none()
 
                 if startDate and endDate:
-                    order = order.filter(sales_order_date__range=[startDate, endDate])
-                    purchase_order = purchase_order.filter(purchase_order_date__range=[startDate, endDate])
-                    deliverychallan = deliverychallan.filter(challan_date__range=[startDate, endDate])
-                    recurringinvoice = recurringinvoice.filter(start_date__range=[startDate, endDate])
-                    estimate = estimate.filter(estimate_date__range=[startDate, endDate])
-                    creditnote = creditnote.filter(credit_note_date__range=[startDate, endDate])
+                    selected_orders = selected_orders.filter(sales_order_date__range=[startDate, endDate])
+                    selected_deliverychallans = selected_deliverychallans.filter(challan_date__range=[startDate, endDate])
+                    selected_recurringinvoices = selected_recurringinvoices.filter(start_date__range=[startDate, endDate])
+                    selected_retainerinvoices = selected_retainerinvoices.filter(retainer_invoice_date__range=[startDate, endDate])
+                    selected_estimates = selected_estimates.filter(estimate_date__range=[startDate, endDate])
+                    selected_creditnotes = selected_creditnotes.filter(credit_note_date__range=[startDate, endDate])
+                    selected_invoice = selected_invoice.filter(date__range=[startDate, endDate])
+                    
+                    selected_purchase_orders = selected_purchase_orders.filter(purchase_order_date__range=[startDate, endDate])
+                    selected_bills = selected_bills.filter(Bill_Date__range=[startDate, endDate])
+                    selected_recurring_bills = selected_recurring_bills.filter(rec_bill_date__range=[startDate, endDate])
+                    selected_debitnote = selected_debitnote.filter(debitnote_date__range=[startDate, endDate])
+                    selected_recurring_expense = selected_recurring_expense.filter(exp_date__range=[startDate, endDate])  
+                    selected_expense = selected_expense.filter(date__range=[startDate, endDate])
 
-                selected_order = None
-                selected_purchase_order = None
-                selected_deliverychallan = None
-                selected_recurringinvoice = None
-                selected_estimate = None
-                selected_creditnote = None
-
-                if trans:
-                    if trans == 'all':
-                        selected_order = order
-                        selected_purchase_order = purchase_order
-                        selected_deliverychallan = deliverychallan
-                        selected_recurringinvoice = recurringinvoice
-                        selected_estimate = estimate
-                        selected_creditnote = creditnote
-                    else:
-                        if is_vendor:
-                            selected_purchase_order = purchase_order.filter(vendor_id=trans)
-                        else:
-                            selected_order = order.filter(customer_id=trans)
-                            if not selected_order.exists():
-                                selected_order = None
-                                selected_deliverychallan = deliverychallan.filter(customer_id=trans)
-                                if not selected_deliverychallan.exists():
-                                    selected_deliverychallan = None
-                                    selected_recurringinvoice = recurringinvoice.filter(customer_id=trans)
-                                    if not selected_recurringinvoice.exists():
-                                        selected_recurringinvoice = None
-                                        selected_estimate = estimate.filter(customer_id=trans)
-                                        if not selected_estimate.exists():
-                                            selected_estimate = None
-                                            selected_creditnote = creditnote.filter(customer_id=trans)
-
+                
                 context = {
-                    'order': list(selected_order) if selected_order else [],
-                    'purchase_order': list(selected_purchase_order) if selected_purchase_order else [],
-                    'deliverychallan': list(selected_deliverychallan) if selected_deliverychallan else [],
-                    'recurringinvoice': list(selected_recurringinvoice) if selected_recurringinvoice else [],
-                    'estimate': list(selected_estimate) if selected_estimate else [],
-                    'creditnote': list(selected_creditnote) if selected_creditnote else [],
+                    'order': selected_orders,
+                    'purchase_order': selected_purchase_orders,
+                    'recurring_expense': selected_recurring_expense,  
+                    'deliverychallan': selected_deliverychallans,
+                    'recurringinvoice': selected_recurringinvoices,
+                    'estimate': selected_estimates,
+                    'creditnote': selected_creditnotes,
+                    'bill': selected_bills,
+                    'invoice': selected_invoice,
+                    'recurring_bill': selected_recurring_bills,
+                    'retainerinvoice': selected_retainerinvoices,
+                    'debitnote': selected_debitnote,  
                     'log_details': log_details,
                     
                     'startDate': startDate,
                     'endDate': endDate,
                     'transaction': trans,
+                    'first_name': trans_fname if 'trans_fname' in locals() else None,
+                    'last_name': trans_lname if 'trans_lname' in locals() else None,
                     'companyName': cmp.company_name,
-                    'customers': customers,
-                    'vendors': vendors,
-                    'challan': challan,
-                    'rcinvoice': rcinvoice,
-                    'est': est,
-                    'cnote': cnote
+                    
                     
                 }
 
-                template_path = 'zohomodules/party_reports/partystatement_email.html'
+
+                template_path = 'zohomodules/party_reports/partystatement_customized_email.html'
                 template = get_template(template_path)
 
                 html = template.render(context)
                 result = BytesIO()
                 pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
                 pdf = result.getvalue()
-                filename = 'Party Statement'
+                filename = 'Party Statement.pdf'
                 subject = 'Party Statement'
                 
                 email = EmailMsg(
@@ -51234,13 +51306,16 @@ def party_statement_customize_email(request):
                 email.attach(filename, pdf, "application/pdf")
                 email.send(fail_silently=False)
                 
-
                 messages.success(request, 'Party Statement report details have been shared via email successfully!')
                 return redirect(party_statement)
         except Exception as e:
             print(e)
             messages.error(request, f'{e}')
             return redirect(party_statement)        
+
+    else:
+        return redirect('/')
+       
 
      
 def purchase_by_item(request):

@@ -31,12 +31,22 @@
 
         #table1 th.payment-method,
         #table1 td.payment-method {
-            width: 150px; /* Adjust width as needed */
+            width: 130px;
         }
 
         #table1 th.running-balance,
         #table1 td.running-balance {
-            width: 150px; /* Adjust width as needed */
+            width: 130px;
+        }
+
+        #table1 th.type-number,
+        #table1 td.type-number {
+            width: 140px;
+        }
+
+        #table1 th.total,
+        #table1 td.total {
+            width: 150px;
         }
 
         body {
@@ -98,7 +108,6 @@
                     {% if startDate and endDate %}
                     <center class="h6 text-white">{{ startDate }} TO {{ endDate }}</center>
                     {% endif %}
-                    
                 </div>
             </div>
             <hr>
@@ -108,9 +117,9 @@
                         <tr>
                             <th>Date</th>
                             <th>Type</th>
-                            <th>Type Number</th>
+                            <th class="type-number">Type Number</th>
                             <th class="payment-method">Payment Method</th>
-                            <th>Total</th>
+                            <th class="total">Total</th>
                             <th class="running-balance">Running Balance</th>
                         </tr>
                     </thead>
@@ -119,9 +128,9 @@
                         <tr>
                             <td>{{ o.sales_order_date }}</td>
                             <td>Sale Order</td>
-                            <td>{{ o.sales_order_number }}</td>
+                            <td class="type-number">{{ o.sales_order_number }}</td>
                             <td class="payment-method">{{ o.payment_method }}</td>
-                            <td>{{ o.sub_total }}</td>
+                            <td class="total">{{ o.sub_total }}</td>
                             <td class="running-balance">{{ o.balance }}</td>
                         </tr>
                         {% endfor %}
@@ -129,9 +138,9 @@
                         <tr>
                             <td>{{ po.purchase_order_date }}</td>
                             <td>Purchase Order</td>
-                            <td>{{ po.sales_order_number }}</td>
+                            <td class="type-number">{{ po.sales_order_number }}</td>
                             <td class="payment-method">{{ po.payment_method }}</td>
-                            <td>{{ po.sub_total }}</td>
+                            <td class="total">{{ po.sub_total }}</td>
                             <td class="running-balance">{{ po.balance }}</td>
                         </tr>
                         {% endfor %}
@@ -139,9 +148,9 @@
                         <tr>
                             <td>{{ i.date }}</td>
                             <td>Invoice Order</td>
-                            <td>{{ i.invoice_number }}</td>
+                            <td class="type-number">{{ i.invoice_number }}</td>
                             <td class="payment-method">{{ i.payment_method }}</td>
-                            <td>{{ i.sub_total }}</td>
+                            <td class="total">{{ i.sub_total }}</td>
                             <td class="running-balance">{{ i.balance }}</td>
                         </tr>
                         {% endfor %}
@@ -149,9 +158,9 @@
                         <tr>
                             <td>{{ d.challan_date }}</td>
                             <td>Delivery Challan</td>
-                            <td>{{ d.challan_number }}</td>
+                            <td class="type-number">{{ d.challan_number }}</td>
                             <td class="payment-method"></td>
-                            <td>{{ d.sub_total }}</td>
+                            <td class="total">{{ d.sub_total }}</td>
                             <td class="running-balance">{{ d.balance }}</td>
                         </tr>
                         {% endfor %}
@@ -159,9 +168,9 @@
                         <tr>
                             <td>{{ d.start_date }}</td>
                             <td>Recurring Invoice</td>
-                            <td>{{ d.rec_invoice_no }}</td>
+                            <td class="type-number">{{ d.rec_invoice_no }}</td>
                             <td class="payment-method">{{ d.payment_method }}</td>
-                            <td>{{ d.subtotal }}</td>
+                            <td class="total">{{ d.subtotal }}</td>
                             <td class="running-balance">{{ d.balance }}</td>
                         </tr>
                         {% endfor %}
@@ -169,9 +178,9 @@
                         <tr>
                             <td>{{ d.estimate_date }}</td>
                             <td>Estimate</td>
-                            <td>{{ d.estimate_number }}</td>
+                            <td class="type-number">{{ d.estimate_number }}</td>
                             <td class="payment-method"></td>
-                            <td>{{ d.sub_total }}</td>
+                            <td class="total">{{ d.sub_total }}</td>
                             <td class="running-balance"></td>
                         </tr>
                         {% endfor %}
@@ -179,10 +188,70 @@
                         <tr>
                             <td>{{ d.credit_note_date }}</td>
                             <td>Credit note</td>
-                            <td>{{ d.credit_note_number }}</td>
-                            <td class="payment-method">{{ d.payment_method }}</td>
-                            <td>{{ d.sub_total }}</td>
+                            <td class="type-number">{{ d.credit_note_number }}</td>
+                            <td class="payment-method">{{d.payment_method}}</td>
+                            <td class="total">{{ d.sub_total }}</td>
                             <td class="running-balance">{{ d.balance }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% for d in retainerinvoice %}
+                        <tr>
+                            <td>{{ d.retainer_invoice_date }}</td>
+                            <td>Retainer Invoice</td>
+                            <td class="type-number">{{ d.retainer_invoice_number }}</td>
+                            <td class="payment-method">{{d.payment_method}}</td>
+                            <td class="total">{{ d.total_amount }}</td>
+                            <td class="running-balance">{{ d.balance }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% for d in bill %}
+                        <tr>
+                            <td>{{ d.Bill_Date }}</td>
+                            <td>Bill</td>
+                            <td class="type-number">{{ d.Bill_Number }}</td>
+                            <td class="payment-method">{{d.Payment_Method}}</td>
+                            <td class="total">{{ d.Sub_Total }}</td>
+                            <td class="running-balance">{{ d.Balance }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% for d in recurring_bill %}
+                        <tr>
+                            <td>{{ d.rec_bill_date }}</td>
+                            <td>Recurring Bill</td>
+                            <td class="type-number">{{ d.recc_bill_no }}</td>
+                            <td class="payment-method">{{d.payment_type}}</td>
+                            <td class="total">{{ d.sub_total }}</td>
+                            <td class="running-balance">{{ d.bal }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% for d in expense %}
+                        <tr>
+                            <td>{{ d.date }}</td>
+                            <td>Expense</td>
+                            <td class="type-number">{{ d.expense_number }}</td>
+                            <td class="payment-method">{{ d.payment_type }}</td>
+                            <td class="total">{{ d.amount }}</td>
+                            <td class="running-balance">{{ d.balance }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% for d in recurring_expense %}
+                        <tr>
+                            <td>{{ d.exp_date }}</td>
+                            <td>Recurring Expense</td>
+                            <td class="type-number">{{ d.expense_number }}</td>
+                            <td class="payment-method">{{ d.Payment_Method }}</td>
+                            <td class="total">{{ d.amount }}</td>
+                            <td class="running-balance">{{ d.balance }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% for d in manual_journel %}
+                        <tr>
+                            <td>{{ d.date }}</td>
+                            <td>Manual Journel</td>
+                            <td class="type-number">{{ d.journal_no }}</td>
+                            <td class="payment-method">{{ d.payment_type }}</td>
+                            <td class="total">{{ d.sub_total }}</td>
+                            <td class="running-balance">{{ d.bal }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
