@@ -144,10 +144,10 @@
                             <td class="running-balance">{{ po.balance }}</td>
                         </tr>
                         {% endfor %}
-                        {% for i in invoice_order %}
+                        {% for i in invoice %}
                         <tr>
                             <td>{{ i.date }}</td>
-                            <td>Invoice Order</td>
+                            <td>Invoice</td>
                             <td class="type-number">{{ i.invoice_number }}</td>
                             <td class="payment-method">{{ i.payment_method }}</td>
                             <td class="total">{{ i.sub_total }}</td>

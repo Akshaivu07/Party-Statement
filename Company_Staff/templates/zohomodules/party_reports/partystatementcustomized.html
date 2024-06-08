@@ -343,10 +343,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                                                         <td class="text-center">{{ po.balance }}</td>
                                                                     </tr>
                                                                     {% endfor %}
-                                                                    {% for i in invoice_order %}
+                                                                    {% for i in invoice %}
                                                                     <tr>
                                                                         <td class="text-center">{{ i.date }}</td>
-                                                                        <td class="text-center">Invoice Order</td>
+                                                                        <td class="text-center">Invoice</td>
                                                                         <td class="text-center">{{ i.invoice_number }}</td>
                                                                         <td class="text-center">{{ i.payment_method }}</td>
                                                                         <td class="text-center">{{ i.sub_total }}</td>
